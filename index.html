@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Feedback Slider</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="feedback-slider">
+      <div class="slider-header">
+        <span id="progressText">Question 1 of 8</span>
+      </div>
+
+      <!-- wrap everything in a real form -->
+      <form id="feedbackForm" action="/your-server-endpoint" method="POST">
+        <div class="slides">
+          <!-- Slide 1 -->
+          <div class="slide">
+            <label>Did you get your Webinar Booking Message?</label>
+            <ul class="choices">
+              <li>
+                <label
+                  ><input type="radio" name="q1" value="yes" /> Yes 👍</label
+                >
+              </li>
+              <li>
+                <label><input type="radio" name="q1" value="no" /> No 👎</label>
+              </li>
+            </ul>
+            <p class="error-message"></p>
+          </div>
+
+          <!-- Slide 2 -->
+          <div class="slide">
+            <label>Were you able to Join the Webinar?</label>
+            <ul class="choices">
+              <li>
+                <label
+                  ><input type="radio" name="q2" value="yes" /> Yes 👍</label
+                >
+              </li>
+              <li>
+                <label><input type="radio" name="q2" value="no" /> No 👎</label>
+              </li>
+            </ul>
+            <p class="error-message"></p>
+          </div>
+
+          <!-- Slide 3 -->
+          <div class="slide">
+            <label>How would you rate the webinar content?</label>
+            <ul class="choices">
+              <li>
+                <label
+                  ><input type="radio" name="q3" value="1" /> ⭐ Poor</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="radio" name="q3" value="2" /> ⭐⭐ Fair</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="radio" name="q3" value="3" /> ⭐⭐⭐ Good</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="radio" name="q3" value="4" /> ⭐⭐⭐⭐ Very
+                  Good</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="radio" name="q3" value="5" /> ⭐⭐⭐⭐⭐
+                  Excellent</label
+                >
+              </li>
+            </ul>
+            <p class="error-message"></p>
+          </div>
+
+          <!-- Slide 4 -->
+          <div class="slide">
+            <label>How was your overall experience?</label>
+            <ul class="choices">
+              <li>
+                <label
+                  ><input type="radio" name="q4" value="excellent" /> 🌟
+                  Excellent</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="radio" name="q4" value="average" /> 👍
+                  Average</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="radio" name="q4" value="poor" /> 😞 Not
+                  satisfied</label
+                >
+              </li>
+            </ul>
+            <p class="error-message"></p>
+          </div>
+
+          <!-- Slide 5 (optional inputs, no validation) -->
+          <div class="slide">
+            <label>Would you recommend this webinar?</label>
+            <ul class="choices">
+              <li>
+                <label
+                  ><input type="radio" name="q5" value="yes" /> Yes 👍</label
+                >
+              </li>
+              <li>
+                <label><input type="radio" name="q5" value="no" /> No 👎</label>
+              </li>
+            </ul>
+            <label>If yes, share details (optional):</label>
+            <input type="text" name="refName" placeholder="Name" />
+            <input type="text" name="refPhone" placeholder="Phone" />
+          </div>
+
+          <!-- Slide 6 (optional textarea) -->
+          <div class="slide">
+            <label>What can we improve?</label>
+            <textarea
+              name="q6"
+              rows="4"
+              placeholder="Suggestions (optional)"
+            ></textarea>
+          </div>
+
+          <!-- Slide 7 (optional + publish checkbox) -->
+          <div class="slide">
+            <label>Share how this helped you?</label>
+            <textarea
+              name="q7"
+              rows="4"
+              placeholder="Testimonial (optional)"
+            ></textarea>
+            <ul class="choices">
+              <li>
+                <label
+                  ><input type="radio" name="publish" value="yes" /> Yes,
+                  publish</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="radio" name="publish" value="no" /> No</label
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Slide 8: Thank you -->
+          <div class="slide">
+            <p>Thank you for your feedback! 💚</p>
+            <p>Your response helps us improve and inspire more lives.</p>
+          </div>
+        </div>
+
+        <!-- Navigation (now real form buttons!) -->
+        <div class="slider-nav">
+          <button type="button" id="backBtn" class="btn-secondary" disabled>
+            Back
+          </button>
+          <button type="button" id="nextBtn" class="btn-primary">
+            Continue
+          </button>
+        </div>
+      </form>
+    </div>
+    <script src="main.js"></script>
+  </body>
+</html>
