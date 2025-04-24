@@ -1,10 +1,128 @@
+%%[  
+SET @UniqueID = RequestParameter("cid")
+
+IF RequestParameter("submitted") == "true" THEN
+
+  SET @q1       = RequestParameter("q1")
+  SET @q2       = RequestParameter("q2")
+  SET @q3       = RequestParameter("q3")
+  SET @q4       = RequestParameter("q4")
+  SET @q5       = RequestParameter("q5")
+  SET @refName  = RequestParameter("refName")
+  SET @refPhone = RequestParameter("refPhone")
+  SET @q6       = RequestParameter("q6")
+  SET @q7       = RequestParameter("q7")
+  SET @publish  = RequestParameter("publish")
+
+  UpsertDE(
+    "FeedbackData", 1,
+     "UniqueID",          @UniqueID,
+     "GotBookingMessage", @q1,
+     "WasAbleToJoin",     @q2,
+     "ContentRating",     @q3,
+     "OverallExperience", @q4,
+     "Recommend",         @q5,
+     "ReferralName",      @refName,
+     "ReferralPhone",     @refPhone,
+     "Suggestions",       @q6,
+     "Testimonial",       @q7,
+     "PublishConsent",    @publish
+  )
+
+ENDIF
+]%%
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Feedback Slider</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f8f8f8;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        padding: 20px;
+      }
+      .feedback-slider {
+        width: 100%;
+        max-width: 400px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .slider-header {
+        padding: 16px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+        font-weight: bold;
+      }
+      .slides {
+        position: relative;
+        min-height: 200px;
+      }
+      .slide {
+        display: none;
+        padding: 16px;
+      }
+      .slide.active {
+        display: block;
+      }
+      .error-message {
+        display: none;
+        color: red;
+        margin-top: 8px;
+      }
+
+      .slider-nav {
+        display: flex;
+        justify-content: space-between;
+        padding: 16px;
+        border-top: 1px solid #eee;
+      }
+      .slider-nav button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s, color 0.3s;
+      }
+      .btn-secondary {
+        background: #ddd;
+        color: #333;
+      }
+      .btn-primary {
+        background: #28a745;
+        color: #fff;
+      }
+      .btn-primary.inactive {
+        background: #ccc;
+        color: #666;
+        cursor: pointer;
+      }
+
+      .slide label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      .slide .choices {
+        list-style: none;
+        padding: 0;
+      }
+      .slide .choices li {
+        margin-bottom: 8px;
+      }
+      .slide .choices input {
+        margin-right: 8px;
+      }
+    </style>
   </head>
   <body>
     <div class="feedback-slider">
@@ -13,7 +131,13 @@
       </div>
 
       <!-- wrap everything in a real form -->
-      <form id="feedbackForm" action="/your-server-endpoint" method="POST">
+      <form
+        id="feedbackForm"
+        action="%%=RequestParameter('PAGEURL')=%%"
+        method="post"
+      >
+        <input type="hidden" name="submitted" value="true" />
+        <input type="hidden" name="cid" value="%%=v(@UniqueID)=%%" />
         <div class="slides">
           <!-- Slide 1 -->
           <div class="slide">
@@ -28,7 +152,7 @@
                 <label><input type="radio" name="q1" value="no" /> No 👎</label>
               </li>
             </ul>
-            <p class="error-message"></p>
+            <p class="error-message" aria-live="polite"></p>
           </div>
 
           <!-- Slide 2 -->
@@ -44,7 +168,7 @@
                 <label><input type="radio" name="q2" value="no" /> No 👎</label>
               </li>
             </ul>
-            <p class="error-message"></p>
+            <p class="error-message" aria-live="polite"></p>
           </div>
 
           <!-- Slide 3 -->
@@ -79,7 +203,7 @@
                 >
               </li>
             </ul>
-            <p class="error-message"></p>
+            <p class="error-message" aria-live="polite"></p>
           </div>
 
           <!-- Slide 4 -->
@@ -105,10 +229,10 @@
                 >
               </li>
             </ul>
-            <p class="error-message"></p>
+            <p class="error-message" aria-live="polite"></p>
           </div>
 
-          <!-- Slide 5 (optional inputs, no validation) -->
+          <!-- Slide 5 (optional) -->
           <div class="slide">
             <label>Would you recommend this webinar?</label>
             <ul class="choices">
@@ -126,7 +250,7 @@
             <input type="text" name="refPhone" placeholder="Phone" />
           </div>
 
-          <!-- Slide 6 (optional textarea) -->
+          <!-- Slide 6 (optional) -->
           <div class="slide">
             <label>What can we improve?</label>
             <textarea
@@ -136,7 +260,7 @@
             ></textarea>
           </div>
 
-          <!-- Slide 7 (optional + publish checkbox) -->
+          <!-- Slide 7 (optional) -->
           <div class="slide">
             <label>Share how this helped you?</label>
             <textarea
@@ -166,17 +290,90 @@
           </div>
         </div>
 
-        <!-- Navigation (now real form buttons!) -->
+        <!-- Navigation -->
         <div class="slider-nav">
           <button type="button" id="backBtn" class="btn-secondary" disabled>
             Back
           </button>
-          <button type="button" id="nextBtn" class="btn-primary">
+          <button type="button" id="nextBtn" class="btn-primary inactive">
             Continue
           </button>
         </div>
       </form>
     </div>
     <script src="main.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const slides = Array.from(document.querySelectorAll(".slide"));
+        const backBtn = document.getElementById("backBtn");
+        const nextBtn = document.getElementById("nextBtn");
+        const progress = document.getElementById("progressText");
+        const form = document.getElementById("feedbackForm");
+        let current = 0;
+        const total = slides.length;
+
+        function updateNav() {
+          // only slides 0–3 are required
+          if (current < 4) {
+            const qName = `q${current + 1}`;
+            const answered = !!document.querySelector(
+              `input[name="${qName}"]:checked`
+            );
+            nextBtn.classList.toggle("inactive", !answered);
+          } else {
+            nextBtn.classList.remove("inactive");
+          }
+        }
+
+        function showSlide(n) {
+          slides.forEach((s, i) => s.classList.toggle("active", i === n));
+          backBtn.disabled = n === 0;
+          nextBtn.textContent = n === total - 1 ? "Submit" : "Continue";
+          progress.textContent = `Question ${n + 1} of ${total}`;
+          // hide old error
+          const err = slides[n].querySelector(".error-message");
+          if (err) err.style.display = "none";
+          updateNav();
+        }
+
+        nextBtn.addEventListener("click", () => {
+          if (current < 4) {
+            const qName = `q${current + 1}`;
+            const answered = document.querySelector(
+              `input[name="${qName}"]:checked`
+            );
+            const err = slides[current].querySelector(".error-message");
+            if (!answered) {
+              err.textContent = "Please select an option to continue.";
+              err.style.display = "block";
+              return; // don’t advance
+            }
+          }
+          if (current < total - 1) {
+            current++;
+            showSlide(current);
+          } else {
+            form.submit();
+          }
+        });
+
+        backBtn.addEventListener("click", () => {
+          if (current > 0) {
+            current--;
+            showSlide(current);
+          }
+        });
+
+        // attach change-listeners to required radios to re-check button state
+        for (let i = 1; i <= 4; i++) {
+          document
+            .querySelectorAll(`input[name="q${i}"]`)
+            .forEach((radio) => radio.addEventListener("change", updateNav));
+        }
+
+        // initial
+        showSlide(0);
+      });
+    </script>
   </body>
 </html>
