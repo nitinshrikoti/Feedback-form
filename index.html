@@ -1,22 +1,310 @@
+%%[  
+SET @UniqueID = RequestParameter("cid")
+
+IF RequestParameter("submitted") == "true" THEN
+
+  SET @q1       = RequestParameter("q1")
+  SET @q2       = RequestParameter("q2")
+  SET @q3       = RequestParameter("q3")
+  SET @q4       = RequestParameter("q4")
+  SET @q5       = RequestParameter("q5")
+  SET @refName  = RequestParameter("refName")
+  SET @refPhone = RequestParameter("refPhone")
+  SET @q6       = RequestParameter("q6")
+  SET @q7       = RequestParameter("q7")
+  SET @publish  = RequestParameter("publish")
+
+  UpsertDE(
+    "FeedbackData", 1,
+     "UniqueID",          @UniqueID,
+     "GotBookingMessage", @q1,
+     "WasAbleToJoin",     @q2,
+     "ContentRating",     @q3,
+     "OverallExperience", @q4,
+     "Recommend",         @q5,
+     "ReferralName",      @refName,
+     "ReferralPhone",     @refPhone,
+     "Suggestions",       @q6,
+     "Testimonial",       @q7,
+     "PublishConsent",    @publish
+  )
+
+ENDIF
+]%%%%[  
+SET @UniqueID = RequestParameter("cid")
+
+IF RequestParameter("submitted") == "true" THEN
+
+  SET @q1       = RequestParameter("q1")
+  SET @q2       = RequestParameter("q2")
+  SET @q3       = RequestParameter("q3")
+  SET @q4       = RequestParameter("q4")
+  SET @q5       = RequestParameter("q5")
+  SET @refName  = RequestParameter("refName")
+  SET @refPhone = RequestParameter("refPhone")
+  SET @q6       = RequestParameter("q6")
+  SET @q7       = RequestParameter("q7")
+  SET @publish  = RequestParameter("publish")
+
+  UpsertDE(
+    "FeedbackData", 1,
+     "UniqueID",          @UniqueID,
+     "GotBookingMessage", @q1,
+     "WasAbleToJoin",     @q2,
+     "ContentRating",     @q3,
+     "OverallExperience", @q4,
+     "Recommend",         @q5,
+     "ReferralName",      @refName,
+     "ReferralPhone",     @refPhone,
+     "Suggestions",       @q6,
+     "Testimonial",       @q7,
+     "PublishConsent",    @publish
+  )
+
+ENDIF
+]%%
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Feedback Slider</title>
+    <title>Webinar Feedback</title>
     <!-- <link rel="stylesheet" href="style.css" /> -->
     <style>
+      :root {
+        --ff-quicksand: "Quicksand", sans-serif;
+        --ff-lato: "Lato", sans-serif;
+      }
+
+      /* -------------------- Reset -------------------- */
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body,
+      h1,
+      h2,
+      h3,
+      h4,
+      p,
+      a,
+      li,
+      ul,
+      ol,
+      span,
+      strong,
+      em,
+      figure,
+      picture,
+      blockquote,
+      dl,
+      dd {
+        padding: 0;
+        margin: 0;
+        /* margin-block-end: 0; */
+      }
+
+      ul[role="list"],
+      ol[role="list"] {
+        list-style: none;
+      }
+
       body {
-        font-family: Arial, sans-serif;
-        background: #f8f8f8;
+        min-height: 100vh;
+        /* line-height: 1.6; */
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      button,
+      input,
+      label {
+        line-height: 1.1;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        text-wrap: balance;
+      }
+
+      /* A elements that don't have a class get default styles */
+      /* a:not([class]) {
+  text-decoration-skip-ink: auto;
+  color: currentColor;
+} */
+      a {
+        text-decoration: none;
+        color: currentColor;
+      }
+
+      input,
+      button,
+      textarea,
+      select {
+        font-family: inherit;
+        font-size: inherit;
+      }
+
+      img,
+      picture {
+        max-width: 100%;
+        display: block;
+      }
+
+      textarea:not([rows]) {
+        min-height: 10em;
+      }
+
+      :target {
+        scroll-margin-block: 5ex;
+      }
+
+      /* -------------------- mc-default -------------------- */
+      .layout-canvas-g > .section {
+        margin: 0px;
+      }
+
+      /* -------------------- Utilities -------------------- */
+      .bg-green {
+        background-color: var(--bg-green);
+      }
+
+      .text-yellow {
+        color: var(--text-yellow);
+      }
+      .text-black {
+        color: var(--text-black);
+      }
+      .text-gray {
+        color: var(--text-gray);
+      }
+      .text-green {
+        color: var(--text-green);
+      }
+      .text-center {
+        text-align: center;
+      }
+
+      .ff-1 {
+        font-family: var(--ff-lato);
+      }
+      .ff-2 {
+        font-family: var(--ff-quicksand);
+      }
+
+      /* From Uiverse.io by marcelodolza */
+      body {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden;
+        --s: 194px; /* control the size */
+        --c1: #f6edb3;
+        --c2: #acc4a3;
+
+        --_l: #0000 calc(25% / 3), var(--c1) 0 25%, #0000 0;
+        --_g: conic-gradient(
+          from 120deg at 50% 87.5%,
+          var(--c1) 120deg,
+          #0000 0
+        );
+
+        background: var(--_g), var(--_g) 0 calc(var(--s) / 2),
+          conic-gradient(from 180deg at 75%, var(--c2) 60deg, #0000 0),
+          conic-gradient(from 60deg at 75% 75%, var(--c1) 0 60deg, #0000 0),
+          linear-gradient(150deg, var(--_l)) 0 calc(var(--s) / 2),
+          conic-gradient(
+            at 25% 25%,
+            #0000 50%,
+            var(--c2) 0 240deg,
+            var(--c1) 0 300deg,
+            var(--c2) 0
+          ),
+          linear-gradient(-150deg, var(--_l)) #55897c /* third color here */;
+        background-size: calc(0.866 * var(--s)) var(--s);
+      }
+
+      html {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden;
+      }
+
+      .container {
+        width: 900px;
+        margin: 0 auto;
+      }
+
+      /* -------------------- Navbar -------------------- */
+      header.page-header {
+        background: transparent;
+        padding: 10px 0px;
+        height: 20vh;
         display: flex;
         justify-content: center;
-        margin: 0;
-        padding: 20px;
       }
+      header.page-header .navbar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      header.page-header .navbar img {
+        height: 60px;
+        width: auto;
+      }
+
+      /* -------------------- Feedback Form -------------------- */
+
+      .form-block {
+        display: flex;
+        justify-content: center;
+        gap: 1em;
+      }
+
+      /* Left-hand orange text panel */
+      .left-panel {
+        flex: 1;
+        max-width: 550px;
+      }
+
+      .left-panel .orange-line {
+        display: inline-block;
+        background: #f7c948;
+        color: #000;
+        font-size: 44px;
+        font-weight: bold;
+        padding: 5px 10px;
+        margin-bottom: 8px;
+        line-height: 1.2;
+      }
+
+      .orange-line:first-child {
+        font-size: 50px;
+        padding: 10px 15px;
+      }
+
+      /* Right-hand slider panel */
+      .right-panel {
+        flex: 1;
+        max-width: 350px;
+        display: flex;
+        align-items: center;
+      }
+
       .feedback-slider {
         width: 100%;
-        max-width: 400px;
+        max-width: 350px;
         background: #fff;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -73,7 +361,7 @@
         cursor: pointer;
       }
 
-      .slide label {
+      .slide > label {
         display: block;
         margin-bottom: 8px;
         font-weight: bold;
@@ -88,185 +376,302 @@
       .slide .choices input {
         margin-right: 8px;
       }
+
+      @media (max-width: 500px) {
+        header.page-header {
+          padding: 5px 0px;
+          height: auto;
+        }
+        header.page-header .navbar img {
+          height: 50px;
+        }
+        .container {
+          width: 100% !important;
+          max-width: 100% !important;
+          padding-inline: 10px;
+        }
+        .form-block {
+          flex-direction: column;
+          gap: 0.5em;
+          padding-inline: 10px;
+          align-items: center;
+        }
+        .left-panel {
+          text-align: center;
+        }
+        .left-panel .orange-line {
+          font-size: 20px;
+          padding: 4px 8px;
+          margin-bottom: 4px;
+        }
+        .orange-line:first-child {
+          display: block;
+          font-size: 24px;
+          padding: 4px 8px;
+        }
+      }
     </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato&family=Quicksand&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <div class="feedback-slider">
-      <div class="slider-header">
-        <span id="progressText">Question 1 of 8</span>
+    <!-- ----- NAVBAR ------------------------------------ -->
+    <header class="page-header container">
+      <nav class="navbar">
+        <img
+          src="https://image.marketing.jeenasikho.com/lib/fe2d117473640474771173/m/1/cbf301aa-0b2b-4801-acad-d2ad99883567.png"
+          alt="Company Logo"
+        />
+      </nav>
+    </header>
+
+    <div class="container form-block">
+      <!-- LEFT PANEL -->
+      <div class="left-panel ff-1">
+        <span class="orange-line">Your Opinion Matters!</span>
+        <span class="orange-line">Help Us Improve</span>
+        <span class="orange-line">by</span>
+        <span class="orange-line">Sharing</span>
+        <span class="orange-line">Your</span>
+        <span class="orange-line">Valuable</span>
+        <span class="orange-line">Feedback.</span>
       </div>
 
-      <!-- wrap everything in a real form -->
-      <form
-        id="feedbackForm"
-        action="%%=RequestParameter('PAGEURL')=%%"
-        method="post"
-      >
-        <input type="hidden" name="submitted" value="true" />
-        <input type="hidden" name="cid" value="%%=v(@UniqueID)=%%" />
-        <div class="slides">
-          <!-- Slide 1 -->
-          <div class="slide">
-            <label>Did you get your Webinar Booking Message?</label>
-            <ul class="choices">
-              <li>
-                <label
-                  ><input type="radio" name="q1" value="yes" /> Yes 👍</label
-                >
-              </li>
-              <li>
-                <label><input type="radio" name="q1" value="no" /> No 👎</label>
-              </li>
-            </ul>
-            <p class="error-message" aria-live="polite"></p>
+      <!-- RIGHT PANEL -->
+      <div class="right-panel ff-2">
+        <!-- feedback‐slider -->
+        <div class="feedback-slider">
+          <div class="slider-header">
+            <span id="progressText">Question 1 of 8</span>
           </div>
 
-          <!-- Slide 2 -->
-          <div class="slide">
-            <label>Were you able to Join the Webinar?</label>
-            <ul class="choices">
-              <li>
+          <!-- wrap everything in a real form -->
+          <form
+            id="feedbackForm"
+            action="%%=RequestParameter('PAGEURL')=%%"
+            method="post"
+          >
+            <input type="hidden" name="submitted" value="true" />
+            <input type="hidden" name="cid" value="%%=v(@UniqueID)=%%" />
+            <div class="slides">
+              <!-- Slide 1 -->
+              <div class="slide">
                 <label
-                  ><input type="radio" name="q2" value="yes" /> Yes 👍</label
+                  >Did you receive the webinar confirmation and joining details
+                  on time?</label
                 >
-              </li>
-              <li>
-                <label><input type="radio" name="q2" value="no" /> No 👎</label>
-              </li>
-            </ul>
-            <p class="error-message" aria-live="polite"></p>
-          </div>
+                <ul class="choices">
+                  <li>
+                    <label
+                      ><input type="radio" name="q1" value="yes" /> Yes
+                      👍</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q1" value="no" /> No 👎</label
+                    >
+                  </li>
+                </ul>
+                <p class="error-message" aria-live="polite"></p>
+              </div>
 
-          <!-- Slide 3 -->
-          <div class="slide">
-            <label>How would you rate the webinar content?</label>
-            <ul class="choices">
-              <li>
+              <!-- Slide 2 -->
+              <div class="slide">
                 <label
-                  ><input type="radio" name="q3" value="1" /> ⭐ Poor</label
+                  >Were you able to join the webinar without any issues?</label
                 >
-              </li>
-              <li>
-                <label
-                  ><input type="radio" name="q3" value="2" /> ⭐⭐ Fair</label
-                >
-              </li>
-              <li>
-                <label
-                  ><input type="radio" name="q3" value="3" /> ⭐⭐⭐ Good</label
-                >
-              </li>
-              <li>
-                <label
-                  ><input type="radio" name="q3" value="4" /> ⭐⭐⭐⭐ Very
-                  Good</label
-                >
-              </li>
-              <li>
-                <label
-                  ><input type="radio" name="q3" value="5" /> ⭐⭐⭐⭐⭐
-                  Excellent</label
-                >
-              </li>
-            </ul>
-            <p class="error-message" aria-live="polite"></p>
-          </div>
+                <ul class="choices">
+                  <li>
+                    <label
+                      ><input type="radio" name="q2" value="Yes" />✅ Yes</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q2" value="No" />❌ No</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input
+                        type="radio"
+                        name="q2"
+                        value="Faced some issues"
+                      />⚠️ Faced some issues</label
+                    >
+                  </li>
+                </ul>
+                <p class="error-message" aria-live="polite"></p>
+              </div>
 
-          <!-- Slide 4 -->
-          <div class="slide">
-            <label>How was your overall experience?</label>
-            <ul class="choices">
-              <li>
+              <!-- Slide 3 -->
+              <div class="slide">
                 <label
-                  ><input type="radio" name="q4" value="excellent" /> 🌟
-                  Excellent</label
+                  >How would you rate the quality and relevance of the webinar
+                  content?</label
                 >
-              </li>
-              <li>
-                <label
-                  ><input type="radio" name="q4" value="average" /> 👍
-                  Average</label
-                >
-              </li>
-              <li>
-                <label
-                  ><input type="radio" name="q4" value="poor" /> 😞 Not
-                  satisfied</label
-                >
-              </li>
-            </ul>
-            <p class="error-message" aria-live="polite"></p>
-          </div>
+                <ul class="choices">
+                  <li>
+                    <label
+                      ><input type="radio" name="q3" value="1" /> ⭐ Poor</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q3" value="2" /> ⭐⭐
+                      Fair</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q3" value="3" /> ⭐⭐⭐
+                      Good</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q3" value="4" /> ⭐⭐⭐⭐ Very
+                      Good</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q3" value="5" /> ⭐⭐⭐⭐⭐
+                      Excellent</label
+                    >
+                  </li>
+                </ul>
+                <p class="error-message" aria-live="polite"></p>
+              </div>
 
-          <!-- Slide 5 (optional) -->
-          <div class="slide">
-            <label>Would you recommend this webinar?</label>
-            <ul class="choices">
-              <li>
+              <!-- Slide 4 -->
+              <div class="slide">
                 <label
-                  ><input type="radio" name="q5" value="yes" /> Yes 👍</label
-                >
-              </li>
-              <li>
-                <label><input type="radio" name="q5" value="no" /> No 👎</label>
-              </li>
-            </ul>
-            <label>If yes, share details (optional):</label>
-            <input type="text" name="refName" placeholder="Name" />
-            <input type="text" name="refPhone" placeholder="Phone" />
-          </div>
+                  >How was your overall experience attending the webinar?
+                </label>
+                <ul class="choices">
+                  <li>
+                    <label
+                      ><input type="radio" name="q4" value="Very Satisfied" />😃
+                      Very Satisfied</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q4" value="Satisfied" />🙂
+                      Satisfied</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q4" value="Neutral" />😐
+                      Neutral</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q4" value="Dissatisfied" />🙁
+                      Dissatisfied</label
+                    >
+                  </li>
+                </ul>
+                <p class="error-message" aria-live="polite"></p>
+              </div>
 
-          <!-- Slide 6 (optional) -->
-          <div class="slide">
-            <label>What can we improve?</label>
-            <textarea
-              name="q6"
-              rows="4"
-              placeholder="Suggestions (optional)"
-            ></textarea>
-          </div>
+              <!-- Slide 5 (optional) -->
+              <div class="slide">
+                <label>Would you recommend this webinar to others? </label>
+                <ul class="choices">
+                  <li>
+                    <label
+                      ><input type="radio" name="q5" value="Definitely" />👍
+                      Definitely</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q5" value="Maybe" />🤔
+                      Maybe</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="q5" value="Not really" />👎 Not
+                      really</label
+                    >
+                  </li>
+                </ul>
+                <label>If yes, share details (optional):</label>
+                <input type="text" name="refName" placeholder="Name" />
+                <input type="text" name="refPhone" placeholder="Phone" />
+              </div>
 
-          <!-- Slide 7 (optional) -->
-          <div class="slide">
-            <label>Share how this helped you?</label>
-            <textarea
-              name="q7"
-              rows="4"
-              placeholder="Testimonial (optional)"
-            ></textarea>
-            <ul class="choices">
-              <li>
+              <!-- Slide 6 (optional) -->
+              <div class="slide">
+                <label>What could we improve for future webinars? </label>
+                <textarea
+                  name="q6"
+                  rows="4"
+                  placeholder="Suggestions (optional)"
+                  style="width: 100%"
+                ></textarea>
+              </div>
+
+              <!-- Slide 7 (optional) -->
+              <div class="slide">
                 <label
-                  ><input type="radio" name="publish" value="yes" /> Yes,
-                  publish</label
-                >
-              </li>
-              <li>
-                <label
-                  ><input type="radio" name="publish" value="no" /> No</label
-                >
-              </li>
-            </ul>
-          </div>
+                  >In what way did this webinar benefit or help you?
+                </label>
+                <textarea
+                  name="q7"
+                  rows="4"
+                  placeholder="Testimonial (optional)"
+                  style="width: 100%"
+                ></textarea>
+                <label>Can we publish your testimonial?</label>
+                <ul class="choices">
+                  <li>
+                    <label
+                      ><input type="radio" name="publish" value="yes" /> Yes,
+                      publish</label
+                    >
+                  </li>
+                  <li>
+                    <label
+                      ><input type="radio" name="publish" value="no" />
+                      No</label
+                    >
+                  </li>
+                </ul>
+              </div>
 
-          <!-- Slide 8: Thank you -->
-          <div class="slide">
-            <p>Thank you for your feedback! 💚</p>
-            <p>Your response helps us improve and inspire more lives.</p>
-          </div>
+              <!-- Slide 8: Thank you -->
+              <div class="slide" style="text-align: center; font-weight: bold">
+                <p>Thank you for your feedback! 💚</p>
+                <p>Your response helps us improve and inspire more lives.</p>
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="slider-nav">
+              <button type="button" id="backBtn" class="btn-secondary" disabled>
+                Back
+              </button>
+              <button type="button" id="nextBtn" class="btn-primary inactive">
+                Continue
+              </button>
+            </div>
+          </form>
         </div>
-
-        <!-- Navigation -->
-        <div class="slider-nav">
-          <button type="button" id="backBtn" class="btn-secondary" disabled>
-            Back
-          </button>
-          <button type="button" id="nextBtn" class="btn-primary inactive">
-            Continue
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
+
     <!-- <script src="main.js"></script> -->
     <script>
       document.addEventListener("DOMContentLoaded", () => {
