@@ -30,38 +30,6 @@ IF RequestParameter("submitted") == "true" THEN
   )
 
 ENDIF
-]%%%%[  
-SET @UniqueID = RequestParameter("cid")
-
-IF RequestParameter("submitted") == "true" THEN
-
-  SET @q1       = RequestParameter("q1")
-  SET @q2       = RequestParameter("q2")
-  SET @q3       = RequestParameter("q3")
-  SET @q4       = RequestParameter("q4")
-  SET @q5       = RequestParameter("q5")
-  SET @refName  = RequestParameter("refName")
-  SET @refPhone = RequestParameter("refPhone")
-  SET @q6       = RequestParameter("q6")
-  SET @q7       = RequestParameter("q7")
-  SET @publish  = RequestParameter("publish")
-
-  UpsertDE(
-    "FeedbackData", 1,
-     "UniqueID",          @UniqueID,
-     "GotBookingMessage", @q1,
-     "WasAbleToJoin",     @q2,
-     "ContentRating",     @q3,
-     "OverallExperience", @q4,
-     "Recommend",         @q5,
-     "ReferralName",      @refName,
-     "ReferralPhone",     @refPhone,
-     "Suggestions",       @q6,
-     "Testimonial",       @q7,
-     "PublishConsent",    @publish
-  )
-
-ENDIF
 ]%%
 
 <!DOCTYPE html>
