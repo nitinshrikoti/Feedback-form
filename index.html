@@ -719,11 +719,11 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
             _default: "slide4",
           },
           slide4: {
-            "Very Satisfied": "slide5",
-            Satisfied: "slide5",
-            Neutral: "slide4-disappoint",
-            Dissatisfied: "slide4-disappoint",
-            _default: "slide5",
+            "Very Satisfied":    "slide5",
+            "Satisfied":         "slide5",
+            "Neutral":           "slide4-disappoint",
+            "Dissatisfied":      "slide4-disappoint",
+            _default:            "slide5"
           },
           "slide4-disappoint": {
             _default: "slide-thanks",
@@ -804,7 +804,7 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
           const cur = history[history.length - 1];
           const rules = branchMap[cur] || {};
           const ans = getAnswer(cur);
-          return rules[ans] || rules._default || "slide-thanks";
+          return rules[ans] ?? rules._default ?? "slide-thanks";
         }
 
         function updateNav() {
