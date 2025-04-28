@@ -299,6 +299,11 @@ header.page-header .navbar img {
   margin-right: 8px;
 }
 
+.slide textarea {
+  width: 100%;
+  box-sizing: border-box; /* so padding doesn’t overflow */
+}
+
 @media (max-width: 500px) {
   header.page-header {
     padding: 5px 0px;
@@ -326,7 +331,7 @@ header.page-header .navbar img {
     padding: 4px 8px;
     margin-bottom: 4px;
   }
-  .orange-line:firstchild {
+  .orange-line:first-child {
     display: block;
     font-size: 24px;
     padding: 4px 8px;

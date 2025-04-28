@@ -1,69 +1,165 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const slides = Array.from(document.querySelectorAll(".slide"));
+  // ——————— BRANCHING RULES ———————
+  const branchMap = {
+    slide1: {
+      yes: "slide2",
+      no: "slide-thanks",
+      _default: "slide-thanks",
+    },
+    slide2: {
+      yes: "slide3",
+      no: "slide2-no",
+      issues: "slide2-issues",
+      _default: "slide3",
+    },
+    "slide2-issues": {
+      _default: "slide3",
+    },
+    "slide2-issues": {
+      _default: "slide3",
+    },
+    slide3: {
+      1: "slide3-improve",
+      2: "slide3-improve",
+      3: "slide3-improve",
+      4: "slide4",
+      5: "slide4",
+      _default: "slide4",
+    },
+    "slide3-improve": {
+      _default: "slide4",
+    },
+    slide4: {
+      "Very Satisfied": "slide5",
+      Satisfied: "slide5",
+      Neutral: "slide4-disappoint",
+      Dissatisfied: "slide4-disappoint",
+      _default: "slide5",
+    },
+    "slide4-disappoint": {
+      _default: "slide-thanks",
+    },
+    slide5: {
+      Definitely: "slide6",
+      Maybe: "slide5-recommend",
+      "Not really": "slide5-recommend",
+      _default: "slide6",
+    },
+    "slide5-recommend": {
+      _default: "slide-thanks",
+    },
+    slide6: {
+      _default: "slide7",
+    },
+    slide7: {
+      yes: "slide-thanks",
+      no: "slide-thanks",
+      _default: "slide-thanks",
+    },
+    // slide-thanks has no next
+  };
+
+  // ——————— STATE & ELEMENTS ———————
+  const history = ["slide1"];
   const backBtn = document.getElementById("backBtn");
   const nextBtn = document.getElementById("nextBtn");
-  const progress = document.getElementById("progressText");
+  const progressTxt = document.getElementById("progressText");
+  const totalSlides = document.querySelectorAll(".slide").length;
   const form = document.getElementById("feedbackForm");
-  let current = 0;
-  const total = slides.length;
 
-  function updateNav() {
-    // only slides 0–3 are required
-    if (current < 4) {
-      const qName = `q${current + 1}`;
-      const answered = !!document.querySelector(
-        `input[name="${qName}"]:checked`
-      );
-      nextBtn.classList.toggle("inactive", !answered);
-    } else {
-      nextBtn.classList.remove("inactive");
-    }
-  }
-
-  function showSlide(n) {
-    slides.forEach((s, i) => s.classList.toggle("active", i === n));
-    backBtn.disabled = n === 0;
-    nextBtn.textContent = n === total - 1 ? "Submit" : "Continue";
-    progress.textContent = `Question ${n + 1} of ${total}`;
-    // hide old error
-    const err = slides[n].querySelector(".error-message");
-    if (err) err.style.display = "none";
+  // ——————— HELPERS ———————
+  function showSlide(id) {
+    document
+      .querySelectorAll(".slide")
+      .forEach((s) => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    backBtn.disabled = history.length === 1;
+    progressTxt.textContent = `Slide ${history.length}`;
     updateNav();
   }
 
-  nextBtn.addEventListener("click", () => {
-    if (current < 4) {
-      const qName = `q${current + 1}`;
-      const answered = document.querySelector(`input[name="${qName}"]:checked`);
-      const err = slides[current].querySelector(".error-message");
-      if (!answered) {
-        err.textContent = "Please select an option to continue.";
+  function getAnswer(slideId) {
+    // textarea?
+    const ta = document.querySelector(`#${slideId} textarea`);
+    if (ta) return ta.value.trim() || null;
+
+    // radio?
+    const name =
+      slideId === "slide7"
+        ? "publish"
+        : "q" + slideId.replace("slide", "").match(/^\d+/)[0];
+    const chk = document.querySelector(
+      `#${slideId} input[name="${name}"]:checked`
+    );
+    return chk ? chk.value : null;
+  }
+
+  function validateCurrent() {
+    const id = history[history.length - 1];
+    const el = document.getElementById(id);
+    const err = el.querySelector(".error-message");
+    err.style.display = "none";
+
+    if (el.querySelector("input,textarea")) {
+      if (!getAnswer(id)) {
+        err.textContent = el.querySelector("textarea")
+          ? "This field is required."
+          : "Please select an option to continue.";
         err.style.display = "block";
-        return; // don’t advance
+        return false;
       }
     }
-    if (current < total - 1) {
-      current++;
-      showSlide(current);
-    } else {
-      form.submit();
+    return true;
+  }
+
+  function getNextId() {
+    const cur = history[history.length - 1];
+    const rules = branchMap[cur] || {};
+    const ans = getAnswer(cur);
+    return rules[ans] ?? rules._default ?? "slide-thanks";
+  }
+
+  function updateNav() {
+    const id = history[history.length - 1];
+    // if no inputs on this slide, always active
+    if (!document.querySelector(`#${id} input, #${id} textarea`)) {
+      nextBtn.classList.remove("inactive");
+      nextBtn.disabled = false;
+      return;
+    }
+    // otherwise only active if answered
+    const ok = !!getAnswer(id);
+    nextBtn.classList.toggle("inactive", !ok);
+    nextBtn.disabled = !ok;
+  }
+
+  // ——————— EVENT HANDLERS ———————
+  nextBtn.addEventListener("click", () => {
+    if (!validateCurrent()) return;
+    const next = getNextId();
+    history.push(next);
+    showSlide(next);
+
+    if (next === "slide-thanks") {
+      nextBtn.textContent = "Submit";
+      nextBtn.onclick = () => form.submit();
     }
   });
 
   backBtn.addEventListener("click", () => {
-    if (current > 0) {
-      current--;
-      showSlide(current);
+    if (history.length > 1) {
+      history.pop();
+      nextBtn.textContent = "Continue";
+      nextBtn.onclick = null;
+      showSlide(history[history.length - 1]);
     }
   });
 
-  // attach change-listeners to required radios to re-check button state
-  for (let i = 1; i <= 4; i++) {
-    document
-      .querySelectorAll(`input[name="q${i}"]`)
-      .forEach((radio) => radio.addEventListener("change", updateNav));
-  }
+  // whenever any input/textarea changes, re-check button state
+  document
+    .querySelectorAll(".slide input, .slide textarea")
+    .forEach((el) => el.addEventListener("change", updateNav));
 
-  // initial
-  showSlide(0);
+  // ——————— INITIALIZE ———————
+  showSlide("slide1");
 });
