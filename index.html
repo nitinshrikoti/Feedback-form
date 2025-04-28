@@ -63,7 +63,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
             <input type="hidden" name="cid" value="%%=v(@UniqueID)=%%" />
 
             <div class="slides">
-              <!-- Q1 -->
               <div class="slide" id="slide1">
                 <label
                   >Did you receive the webinar confirmation and joining details
@@ -85,7 +84,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q2 -->
               <div class="slide" id="slide2">
                 <label
                   >Were you able to join the webinar without any issues?</label
@@ -112,7 +110,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q2 = “no” follow-up -->
               <div class="slide" id="slide2-no">
                 <label>What was the reason you couldn’t join?</label>
                 <textarea
@@ -123,7 +120,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q2 = “issues” follow-up #1 -->
               <div class="slide" id="slide2-issues">
                 <label>What issues did you face joining?</label>
                 <textarea
@@ -134,7 +130,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q3 -->
               <div class="slide" id="slide3">
                 <label
                   >How would you rate the webinar’s content quality &
@@ -174,7 +169,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q3 needs improvement -->
               <div class="slide" id="slide3-improve">
                 <label>What could we improve in the content?</label>
                 <textarea
@@ -185,7 +179,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q4 -->
               <div class="slide" id="slide4">
                 <label
                   >How was your overall experience attending the webinar?</label
@@ -219,7 +212,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q4 disappointed -->
               <div class="slide" id="slide4-disappoint">
                 <label>What disappointed you the most?</label>
                 <textarea
@@ -230,7 +222,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q5 -->
               <div class="slide" id="slide5">
                 <label>Would you recommend this webinar to others?</label>
                 <ul class="choices">
@@ -256,7 +247,19 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q5 recommend-improve -->
+              <!-- new: Q5-referral (only for “Definitely”) -->
+              <div class="slide" id="slide5-referral">
+                <label
+                  >Please share the name & phone of who you’d recommend:</label
+                >
+                <input type="text" name="refName" placeholder="Referral Name" />
+                <input
+                  type="number"
+                  name="refPhone"
+                  placeholder="Referral Phone"
+                />
+              </div>
+
               <div class="slide" id="slide5-recommend">
                 <label>What could make you recommend us in the future?</label>
                 <textarea
@@ -267,7 +270,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 <p class="error-message"></p>
               </div>
 
-              <!-- Q6 optional -->
               <div class="slide" id="slide6">
                 <label>What could we improve for future webinars?</label>
                 <textarea
@@ -277,7 +279,6 @@ RequestParameter("q7") SET @publish = RequestParameter("publish") UpsertDE(
                 ></textarea>
               </div>
 
-              <!-- Q7 optional -->
               <div class="slide" id="slide7">
                 <label>How did this webinar help you?</label>
                 <textarea

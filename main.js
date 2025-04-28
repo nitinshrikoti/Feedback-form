@@ -12,9 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
       issues: "slide2-issues",
       _default: "slide3",
     },
-    "slide2-issues": {
-      _default: "slide3",
-    },
+    "slide2-no": { _default: "slide-thanks" },
     "slide2-issues": {
       _default: "slide3",
     },
@@ -40,10 +38,13 @@ document.addEventListener("DOMContentLoaded", () => {
       _default: "slide-thanks",
     },
     slide5: {
-      Definitely: "slide6",
+      Definitely: "slide5-referral",
       Maybe: "slide5-recommend",
       "Not really": "slide5-recommend",
       _default: "slide6",
+    },
+    "slide5-referral": {
+      _default: "slide7",
     },
     "slide5-recommend": {
       _default: "slide-thanks",
@@ -64,44 +65,56 @@ document.addEventListener("DOMContentLoaded", () => {
   const backBtn = document.getElementById("backBtn");
   const nextBtn = document.getElementById("nextBtn");
   const progressTxt = document.getElementById("progressText");
-  const totalSlides = document.querySelectorAll(".slide").length;
   const form = document.getElementById("feedbackForm");
 
-  // ——————— HELPERS ———————
+  // slides that are purely optional
+  const optionalSlides = ["slide5-referral", "slide6", "slide7"];
+
   function showSlide(id) {
     document
       .querySelectorAll(".slide")
       .forEach((s) => s.classList.remove("active"));
     document.getElementById(id).classList.add("active");
     backBtn.disabled = history.length === 1;
-    progressTxt.textContent = `Slide ${history.length}`;
-    updateNav();
+    progressTxt.textContent = `Question ${history.length}`;
+    // if it's THANK-YOU, turn button into real submit
+    if (id === "slide-thanks") {
+      nextBtn.textContent = "Submit";
+      nextBtn.type = "submit";
+      nextBtn.disabled = false;
+      nextBtn.classList.remove("inactive");
+    } else {
+      nextBtn.textContent = "Continue";
+      nextBtn.type = "button";
+      updateNav();
+    }
   }
 
   function getAnswer(slideId) {
-    // textarea?
     const ta = document.querySelector(`#${slideId} textarea`);
     if (ta) return ta.value.trim() || null;
-
-    // radio?
     const name =
       slideId === "slide7"
         ? "publish"
         : "q" + slideId.replace("slide", "").match(/^\d+/)[0];
-    const chk = document.querySelector(
+    const ck = document.querySelector(
       `#${slideId} input[name="${name}"]:checked`
     );
-    return chk ? chk.value : null;
+    return ck ? ck.value : null;
   }
 
   function validateCurrent() {
-    const id = history[history.length - 1];
-    const el = document.getElementById(id);
+    const cur = history[history.length - 1];
+    if (optionalSlides.includes(cur)) {
+      // never block optional slides
+      return true;
+    }
+    const el = document.getElementById(cur);
     const err = el.querySelector(".error-message");
     err.style.display = "none";
-
+    // only required if there's an input or textarea
     if (el.querySelector("input,textarea")) {
-      if (!getAnswer(id)) {
+      if (!getAnswer(cur)) {
         err.textContent = el.querySelector("textarea")
           ? "This field is required."
           : "Please select an option to continue.";
@@ -116,50 +129,48 @@ document.addEventListener("DOMContentLoaded", () => {
     const cur = history[history.length - 1];
     const rules = branchMap[cur] || {};
     const ans = getAnswer(cur);
-    return rules[ans] ?? rules._default ?? "slide-thanks";
+    return rules[ans] || rules._default || "slide-thanks";
   }
 
   function updateNav() {
-    const id = history[history.length - 1];
-    // if no inputs on this slide, always active
-    if (!document.querySelector(`#${id} input, #${id} textarea`)) {
-      nextBtn.classList.remove("inactive");
+    const cur = history[history.length - 1];
+    if (optionalSlides.includes(cur)) {
       nextBtn.disabled = false;
+      nextBtn.classList.remove("inactive");
       return;
     }
-    // otherwise only active if answered
-    const ok = !!getAnswer(id);
-    nextBtn.classList.toggle("inactive", !ok);
+    // slides without inputs get auto-enabled
+    if (!document.querySelector(`#${cur} input, #${cur} textarea`)) {
+      nextBtn.disabled = false;
+      nextBtn.classList.remove("inactive");
+      return;
+    }
+    // otherwise only enable if answered
+    const ok = !!getAnswer(cur);
     nextBtn.disabled = !ok;
+    nextBtn.classList.toggle("inactive", !ok);
   }
 
-  // ——————— EVENT HANDLERS ———————
   nextBtn.addEventListener("click", () => {
     if (!validateCurrent()) return;
     const next = getNextId();
     history.push(next);
     showSlide(next);
-
-    if (next === "slide-thanks") {
-      nextBtn.textContent = "Submit";
-      nextBtn.onclick = () => form.submit();
-    }
   });
 
   backBtn.addEventListener("click", () => {
     if (history.length > 1) {
       history.pop();
       nextBtn.textContent = "Continue";
-      nextBtn.onclick = null;
+      nextBtn.type = "button";
       showSlide(history[history.length - 1]);
     }
   });
 
-  // whenever any input/textarea changes, re-check button state
+  // re-check whenever anything changes
   document
     .querySelectorAll(".slide input, .slide textarea")
     .forEach((el) => el.addEventListener("change", updateNav));
 
-  // ——————— INITIALIZE ———————
   showSlide("slide1");
 });
