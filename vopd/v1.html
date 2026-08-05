@@ -1,0 +1,788 @@
+%%[
+SET @Id = RequestParameter("id")
+
+IF NOT EMPTY(@Id) THEN
+
+  SET @accountId   = Lookup("VOPD_COMPLETED_MSG","AccountId","Id",@Id)
+  SET @patientName = Lookup("VOPD_COMPLETED_MSG","Patients_Name__c","Id",@Id)
+  SET @phone       = Lookup("VOPD_COMPLETED_MSG","Patient_Number_open__c","Id",@Id)
+
+ENDIF
+
+SET @createdDate = SystemDateToLocalDate(NOW())
+
+SET @existingCount = LookupRows("VOPD_Feedback1","Id",@Id)
+SET @alreadySubmitted = IIF(RowCount(@existingCount) > 0, 1, 0)
+
+/* ── Read POST data (submitted via hidden form) ── */
+SET @starRating        = RequestParameter("StarRating")
+SET @feedbackPath      = RequestParameter("FeedbackPath")
+SET @primaryFeedback   = RequestParameter("PrimaryFeedback")
+SET @otherFeedbackText = RequestParameter("OtherFeedbackText")
+SET @issueDetail       = RequestParameter("IssueDetail")
+SET @wouldRecommend    = RequestParameter("WouldRecommend")
+SET @callbackRequested = RequestParameter("CallbackRequested")
+SET @additionalFeedback= RequestParameter("AdditionalFeedback")
+
+
+IF NOT EMPTY(@starRating) AND NOT EMPTY(@Id) AND @alreadySubmitted == 0 THEN
+
+  SET @insertResult = InsertDE(
+    "VOPD_Feedback1",
+    "Id", @Id,
+
+    "AccountId",           @accountId,
+    "PatientName",         @patientName,
+    "Phone",               @phone,
+    "CreatedDate",         @createdDate,
+
+    "StarRating",          @starRating,
+    "FeedbackPath",        @feedbackPath,
+    "PrimaryFeedback",     @primaryFeedback,
+    "OtherFeedbackText",   @otherFeedbackText,
+    "IssueDetail",         @issueDetail,
+    "WouldRecommend",      @wouldRecommend,
+    "CallbackRequested",   @callbackRequested,
+    "AdditionalFeedback",  @additionalFeedback
+  )
+
+ENDIF
+
+SET @displayName = IIF(NOT EMPTY(@patientName), @patientName, "रोगी")
+SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
+]%%
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Doctor Feedback – VOPD</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      :root {
+        --min-touch: 44px;
+        --blue-deep: #1565c0;
+        --blue-mid: #1e88e5;
+        --blue-light: #42a5f5;
+        --blue-pale: #e3f0ff;
+        --blue-subtle: #f0f7ff;
+        --border: #dde3eb;
+        --text-primary: #0d1b2a;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --bg: #f0f5fb;
+        --card-bg: #ffffff;
+        --green-bg: #e8f5e9;
+        --green-border: #81c784;
+        --green-text: #1b5e20;
+        --yellow-bg: #fff8e1;
+        --yellow-border: #ffd54f;
+        --yellow-text: #5d4037;
+        --red-bg: #ffebee;
+        --red-border: #ef9a9a;
+        --red-text: #b71c1c;
+        --radius-sm: 10px;
+        --radius-md: 14px;
+        --radius-lg: 20px;
+        --shadow-card: 0 1px 8px rgba(21,101,192,0.08), 0 4px 24px rgba(21,101,192,0.05);
+      }
+
+      html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+      body {
+        background: var(--bg);
+        font-family: 'Noto Sans Devanagari', 'Segoe UI', Arial, sans-serif;
+        min-height: 100vh;
+        min-height: 100dvh;
+        color: var(--text-primary);
+        line-height: 1.5;
+      }
+
+      .pg { max-width: 480px; margin: 0 auto; padding: 16px 16px 80px; }
+
+      .logo { text-align: center; margin-bottom: 14px; padding-top: 4px; }
+      .logo img { width: min(140px, 38vw); height: auto; display: block; margin: 0 auto; }
+
+      .hero {
+        background: linear-gradient(140deg, #0d47a1 0%, #1565c0 45%, #1e88e5 80%, #42a5f5 100%);
+        border-radius: var(--radius-lg);
+        padding: 20px 18px 18px;
+        margin-bottom: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        top: -40px; right: -40px;
+        width: 140px; height: 140px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.07);
+        pointer-events: none;
+      }
+      .hero::after {
+        content: '';
+        position: absolute;
+        bottom: -25px; right: 18px;
+        width: 90px; height: 90px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.05);
+        pointer-events: none;
+      }
+      .hero h1 { font-size: clamp(15px, 4.2vw, 17px); font-weight: 500; color: #fff; margin-bottom: 10px; line-height: 1.5; position: relative; z-index: 1; }
+      .hero h1 strong { font-weight: 700; }
+      .hero-sub { font-size: clamp(12px, 3.5vw, 13px); color: rgba(255,255,255,0.88); line-height: 1.75; margin-bottom: 14px; position: relative; z-index: 1; }
+      .hero-cta {
+        background: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.22);
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-size: clamp(11px, 3.2vw, 13px);
+        color: #fff;
+        text-align: center;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        position: relative;
+        z-index: 1;
+        line-height: 1.55;
+      }
+
+      .card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px 16px; box-shadow: var(--shadow-card); }
+
+      .pbar { height: 3px; background: #e8eef5; border-radius: 99px; margin-bottom: 20px; overflow: hidden; }
+      .pfill { height: 100%; background: linear-gradient(90deg, var(--blue-deep), var(--blue-light)); border-radius: 99px; transition: width 0.45s cubic-bezier(.4,0,.2,1); }
+
+      .section { display: none; }
+      .section.on { display: block; animation: fadeUp 0.22s ease both; }
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+      .btn-back { background: none; border: none; font-size: 13px; color: var(--text-secondary); cursor: pointer; padding: 0 0 18px; display: none; align-items: center; gap: 5px; font-family: inherit; touch-action: manipulation; }
+      .btn-back.on { display: inline-flex; }
+
+      .q-badge { display: inline-block; background: var(--blue-pale); color: var(--blue-deep); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; margin-bottom: 8px; letter-spacing: 0.04em; }
+      .q-text { font-size: clamp(14px, 4vw, 16px); font-weight: 500; color: var(--text-primary); margin-bottom: 4px; line-height: 1.5; }
+      .q-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+
+      .stars-row {
+        display: flex;
+        gap: 4px;          
+        margin-bottom: 8px;
+      }
+
+      .star {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 2px;  
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+        min-height: var(--min-touch); 
+      }
+
+      .star .star-icon {
+        font-size: clamp(14px, 4.5vw, 18px); 
+        line-height: 1;
+        display: block;
+      }
+
+      .star .lbl {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-weight: 700;
+        line-height: 1;
+      }
+      .star:active { transform: scale(0.96); }
+      .star.on { background: var(--blue-pale); border-color: var(--blue-deep); }
+      .star.on .lbl { color: var(--blue-deep); }
+      .star-labels { display: flex; justify-content: space-between; margin-bottom: 18px; }
+      .star-labels span { font-size: 10px; color: var(--text-muted); max-width: 45%; line-height: 1.4; }
+      .star-labels span:last-child { text-align: right; }
+
+      .opts { display: flex; flex-direction: column; gap: 8px; }
+      .opt {
+        padding: 13px 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        font-size: clamp(13px, 3.8vw, 14px);
+        color: var(--text-primary);
+        cursor: pointer;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        line-height: 1.4;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+        width: 100%;
+        font-family: inherit;
+        min-height: var(--min-touch); /* 44px tap target */
+      }
+      .opt:active { transform: scale(0.985); }
+      .opt:hover { background: var(--blue-subtle); border-color: #90caf9; }
+      .opt.selected { background: var(--blue-pale); border-color: var(--blue-deep); color: #0d2b5e; }
+      .oi { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+      .opt-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+      .multi-note { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-style: italic; }
+
+      .prompt { border-radius: var(--radius-sm); padding: 13px 14px; font-size: clamp(12px, 3.5vw, 14px); line-height: 1.75; margin-bottom: 18px; }
+      .prompt.good  { background: var(--green-bg);  border: 1px solid var(--green-border);  color: var(--green-text);  }
+      .prompt.warn  { background: var(--yellow-bg); border: 1px solid var(--yellow-border); color: var(--yellow-text); }
+      .prompt.sad   { background: var(--red-bg);    border: 1px solid var(--red-border);    color: var(--red-text);    }
+      .prompt strong { font-weight: 500; }
+
+      .tx { width: 100%; padding: 12px 13px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: #f8fafc; font-size: clamp(13px, 3.8vw, 14px); color: var(--text-primary); font-family: inherit; resize: vertical; min-height: 88px; transition: border-color 0.15s, background 0.15s;  }
+      .tx:focus { outline: none; border-color: var(--blue-deep); background: #fff; }
+      .field-label { font-size: clamp(12px, 3.3vw, 13px); color: var(--text-secondary); margin-bottom: 6px; margin-top: 16px; }
+
+      .btn-submit {
+        width: 100%;
+        padding: 15px;
+        min-height: var(--min-touch);
+        border-radius: var(--radius-sm);
+        border: none;
+        background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+        font-size: clamp(14px, 4vw, 15px);
+        font-weight: 700;
+        color: #fff;
+        cursor: pointer;
+        margin-top: 18px;
+        transition: opacity 0.15s, transform 0.1s;
+        letter-spacing: 0.02em;
+        font-family: inherit;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .btn-submit:active { transform: scale(0.985); opacity: 0.9; }
+      .btn-outline {
+        width: 100%;
+        padding: 13px;
+        min-height: var(--min-touch);
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--blue-deep);
+        background: transparent;
+        font-size: clamp(13px, 3.8vw, 14px);
+        font-weight: 600;
+        color: var(--blue-deep);
+        cursor: pointer;
+        margin-top: 8px;
+        transition: background 0.15s;
+        font-family: inherit;
+        touch-action: manipulation;
+      }
+      .btn-outline:active { background: var(--blue-pale); }
+
+      .contact-box { background: var(--blue-pale); border: 1px solid #90caf9; border-radius: var(--radius-sm); padding: 14px; margin-bottom: 18px; }
+      .contact-title { font-size: clamp(12px, 3.3vw, 13px); font-weight: 700; color: #0d2b5e; margin-bottom: 6px; line-height: 1.5; }
+      .contact-sub { font-size: clamp(12px, 3.3vw, 13px); color: var(--blue-deep); line-height: 1.7; margin-bottom: 12px; }
+      .contact-number {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1px solid #90caf9;
+        border-radius: 8px;
+        padding: 10px 14px;       
+        font-size: clamp(13px, 4vw, 16px); 
+        font-weight: 700;
+        color: var(--blue-deep);
+        letter-spacing: 0.04em;
+        word-break: keep-all;     
+      }
+
+      .confirm-box { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--radius-sm); padding: 13px 14px; margin-bottom: 18px; font-size: clamp(12px, 3.5vw, 14px); color: var(--green-text); line-height: 1.75; }
+      .confirm-box strong { font-weight: 700; }
+
+      .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+      .done-wrap { text-align: center; padding: 24px 8px 8px; }
+      .done-circle { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--blue-pale), #bbdefb); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; box-shadow: 0 4px 20px rgba(21,101,192,0.18); }
+      .done-circle svg { width: 32px; height: 32px; }
+      .done-h { font-size: clamp(18px, 5vw, 21px); font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+      .done-p { font-size: clamp(12px, 3.5vw, 14px); color: var(--text-secondary); line-height: 1.9; }
+      .done-contact { display: inline-flex; align-items: center; gap: 8px; background: var(--blue-pale); color: var(--blue-deep); font-size: clamp(13px, 3.8vw, 15px); font-weight: 700; padding: 11px 22px; border-radius: 99px; margin-top: 18px; letter-spacing: 0.03em; }
+
+      .field-error { display: none; color: var(--red-text); font-size: 12px; margin-top: 5px; }
+
+      @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .pg { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+      }
+
+      @media (max-width: 425px) {
+      .pg { padding: 12px 10px 80px; }
+
+      .hero { padding: 16px 14px 14px; }
+
+      .card { padding: 16px 12px; }
+
+      .star .star-icon { font-size: 13px; }
+
+      .star .lbl { font-size: 9px; }
+
+      .star-labels span { font-size: 9px; }
+
+      .done-h { font-size: 16px; }
+
+      .done-contact {
+        font-size: 13px;
+        padding: 10px 16px;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <!-- ══════════════════════════════════════════════
+         HIDDEN FORM — submits all collected data to
+         the CloudPage itself so AMPscript can UpsertDE
+         ══════════════════════════════════════════════ -->
+    <form id="feedbackForm" method="POST">
+      <input type="hidden" id="f_StarRating"        name="StarRating"        value="" />
+      <input type="hidden" id="f_FeedbackPath"      name="FeedbackPath"      value="" />
+      <input type="hidden" id="f_PrimaryFeedback"   name="PrimaryFeedback"   value="" />
+      <input type="hidden" id="f_OtherFeedbackText" name="OtherFeedbackText" value="" />
+      <input type="hidden" id="f_IssueDetail"       name="IssueDetail"       value="" />
+      <input type="hidden" id="f_WouldRecommend"    name="WouldRecommend"    value="" />
+      <input type="hidden" id="f_CallbackRequested" name="CallbackRequested" value="" />
+      <input type="hidden" id="f_AdditionalFeedback" name="AdditionalFeedback" value="" />
+    </form>
+
+
+    <div class="pg">
+
+      <!-- Logo -->
+      <div class="logo">
+        <img src="https://image.marketing.jeenasikho.com/lib/fe2d117473640474771173/m/1/7ba0d21d-ea59-4ac0-9fa0-213c3f25cf9e.png" alt="NutriRoz Logo" />
+      </div>
+
+      <!-- Hero -->
+      <div class="hero">
+        <h1><strong>%%=v(@displayName)=%%</strong>, आपकी डॉक्टर के साथ Video Consultation सफलतापूर्वक पूरी हो गई है!</h1>
+        <br/>
+        <div class="hero-sub">हमें उम्मीद है कि Consultation के दौरान आपको अपनी समस्या से संबंधित संपूर्ण जानकारी मिली होगी।</div>
+        <br/>
+        <div class="hero-cta">हम आपको बेहतरीन सेवाएँ दे सकें, इसलिए हमारे साथ अपना अनुभव साझा करें।</div>
+      </div>
+
+      <!-- Main Card -->
+      <div class="card">
+        <div class="pbar"><div class="pfill" id="prog" style="width:5%"></div></div>
+        <button class="btn-back" id="backbtn" onclick="goBack()">← वापस जाएं</button>
+
+        <!-- ──────────────────────────────────────── -->
+        <!-- S0: Star Rating                          -->
+        <!-- ──────────────────────────────────────── -->
+        <div class="section" id="s0">
+          <div class="q-text">आप अपने डॉक्टर के साथ हुए अनुभव को कितने Star देना चाहेंगे?</div>
+          <div class="stars-row" id="starrow">
+            <div class="star" onclick="pickStar(1)"><span class="star-icon">★</span><span class="lbl">1</span></div>
+            <div class="star" onclick="pickStar(2)"><span class="star-icon">★★</span><span class="lbl">2</span></div>
+            <div class="star" onclick="pickStar(3)"><span class="star-icon">★★★</span><span class="lbl">3</span></div>
+            <div class="star" onclick="pickStar(4)"><span class="star-icon">★★★★</span><span class="lbl">4</span></div>
+            <div class="star" onclick="pickStar(5)"><span class="star-icon">★★★★★</span><span class="lbl">5</span></div>
+          </div>
+          <div class="star-labels">
+            <span>बिल्कुल पसंद नहीं</span>
+            <span>बेहद शानदार!</span>
+          </div>
+        </div>
+
+        <!-- ══════════ HIGH PATH (4–5 ★) ══════════ -->
+
+        <!-- S1H: What did you like? -->
+        <div class="section" id="s1h">
+          <div class="prompt good"><strong>हमें ख़ुशी है कि आपका अनुभव अच्छा रहा।</strong></div>
+          <div class="q-text">कृपया बताएं कि आपको क्या अच्छा लगा?</div>
+          <div class="opts" id="good-opts">
+            <button class="opt" onclick="toggleOpt(this,'good')"><div>डॉक्टर ने ध्यान से सुना</div></button>
+            <button class="opt" onclick="toggleOpt(this,'good')"><div>उपचार स्पष्ट बताया</div></button>
+            <button class="opt" onclick="toggleOpt(this,'good')"><div>व्यवहार अच्छा था</div></button>
+            <button class="opt" onclick="toggleOpt(this,'good')"><div>समस्या अच्छे से समझी</div></button>
+            <button class="opt" onclick="handleOther(this)"><div>कोई अन्य</div></button>
+            <textarea id="otherInput" class="tx" placeholder="कृपया लिखें..." style="display:none;margin-top:10px"></textarea>
+            <div id="otherError" class="field-error">कृपया अपना सुझाव लिखें</div>
+          </div>
+          <button id="nextBtn" class="btn-submit" onclick="validateAndGo()" style="display:none">आगे बढ़ें →</button>
+        </div>
+
+        <!-- S2H-RECOMMEND -->
+        <div class="section" id="s2h-recommend">
+          <div class="prompt warn"><strong>धन्यवाद! हमें जानकर ख़ुशी हुई।</strong></div>
+          <div class="q-text">क्या आप डॉक्टर को अपने परिवार या दोस्तों को recommend करेंगे?</div>
+          <div class="opts">
+            <button class="opt" onclick="setRecommend('हाँ'); go('s2h-recommend','s3h-yes-rec')"><div>हाँ</div></button>
+            <button class="opt" onclick="setRecommend('नहीं'); go('s2h-recommend','s3h-no-rec')"><div>नहीं</div></button>
+          </div>
+        </div>
+
+        <!-- S3H-YES-REC -->
+        <div class="section" id="s3h-yes-rec">
+          <div class="confirm-box"><strong>धन्यवाद! हमें जानकर ख़ुशी हुई।</strong> 🙏</div>
+          <div class="contact-box">
+            <div class="contact-title">सेहतमंद जीवन के बिना खूबसूरत जीवन की कल्पना असंभव है।</div>
+            <div class="contact-sub">अपने दोस्तों व परिवार के साथ यह नंबर शेयर करें ताकि वे भी अपनी स्वास्थ्य समस्याओं से संबंधित सही मार्गदर्शन प्राप्त कर सकें।</div>
+            <div class="contact-number">📞 82704 82704</div>
+          </div>
+          <div class="field-label">कोई और सुझाव देना चाहेंगे?</div>
+          <textarea class="tx" id="additionalHigh" placeholder="आपका हर सुझाव हमारे लिए कीमती है..."></textarea>
+          <button class="btn-submit" onclick="submitFeedback('s3h-yes-rec')">Submit करें →</button>
+        </div>
+
+        <!-- S3H-NO-REC -->
+        <div class="section" id="s3h-no-rec">
+          <div class="prompt warn">समझ सकते हैं। हम कोशिश करेंगे कि आपका अनुभव और बेहतर हो।</div>
+          <div class="field-label">कोई और सुझाव देना चाहेंगे?</div>
+          <textarea class="tx" id="additionalHighNo" placeholder="आपके विचार यहाँ लिखें..."></textarea>
+          <button class="btn-submit" onclick="submitFeedback('s3h-no-rec')">Submit करें →</button>
+        </div>
+
+        <!-- ══════════ MID/LOW PATH (1–3 ★) ══════════ -->
+
+        <!-- S1M -->
+        <div class="section" id="s1m">
+          <div class="prompt warn"><strong>हमें खेद है कि आपका अनुभव अच्छा नहीं रहा।</strong></div>
+          <div class="q-text">कृपया बताएं कि आपको किस बात से निराशा हुई?</div>
+          <div class="opts">
+            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>डॉक्टर देरी से जुड़े</div></button>
+            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>डॉक्टर ने अच्छे से Guide नहीं किया</div></button>
+            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>डॉक्टर ने समस्या का सही उपचार नहीं बताया</div></button>
+            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>डॉक्टर का व्यवहार अच्छा नहीं था</div></button>
+            <button class="opt" onclick="setPrimary('अन्य'); go('s1m','s2m-other')"><div>कोई अन्य</div></button>
+          </div>
+        </div>
+
+        <!-- S2M-DETAIL -->
+        <div class="section" id="s2m-detail">
+          <div class="prompt warn">हमें यह जानकर खेद हुआ कि आपको परेशानी हुई। हम जल्द ही इसका हल करेंगे।</div>
+          <div class="q-text">कृपया विस्तार में बताएं कि आपको कौन सी समस्या का सामना करना पड़ा?</div>
+          <textarea class="tx" id="issueDetailMid" placeholder="समस्या यहाँ लिखें..."></textarea>
+          <div class="divider"></div>
+          <div class="q-text" style="font-size:15px">क्या आप डॉक्टर से दोबारा बात करना चाहेंगे?</div>
+          <div class="opts" style="margin-top:12px">
+            <button class="opt" onclick="if(validateTextarea('s2m-detail','issueDetailMid')){ setCallback('हाँ'); go('s2m-detail','s3-callback'); }"><div>हाँ</div></button>
+            <button class="opt" onclick="if(validateTextarea('s2m-detail','issueDetailMid')){ setCallback('नहीं'); submitFeedback('s2m-detail'); }"><div>नहीं</div></button>
+          </div>
+        </div>
+
+        <!-- S2M-OTHER -->
+        <div class="section" id="s2m-other">
+          <div class="prompt warn">हमें यह जानकर खेद हुआ कि आपको परेशानी हुई।</div>
+          <div class="q-text">कृपया विस्तार में बताएं कि आपको कौन सी समस्या का सामना करना पड़ा?</div>
+          <textarea class="tx" id="issueDetailOther" placeholder="समस्या यहाँ लिखें..."></textarea>
+          <div class="divider"></div>
+          <div class="q-text" style="font-size:15px">क्या आप डॉक्टर से दोबारा बात करना चाहेंगे?</div>
+          <div class="opts" style="margin-top:12px">
+            <button class="opt" onclick="if(validateTextarea('s2m-other','issueDetailOther')){ setCallback('हाँ'); go('s2m-other','s3-calltime'); }"><div>हाँ, Call करें</div></button>
+            <button class="opt" onclick="if(validateTextarea('s2m-other','issueDetailOther')){ setCallback('नहीं'); submitFeedback('s2m-other'); }"><div>नहीं</div></button>
+          </div>
+        </div>
+
+        <!-- S2L-DETAIL -->
+        <div class="section" id="s2l-detail">
+          <div class="prompt sad">हमें यह जानकर खेद हुआ कि आपको परेशानी हुई।</div>
+          <div class="q-text">कृपया विस्तार में बताएं कि आपको कौन सी समस्या का सामना करना पड़ा?</div>
+          <textarea class="tx" id="issueDetailLow" placeholder="समस्या यहाँ लिखें..."></textarea>
+          <div class="divider"></div>
+          <div class="q-text" style="font-size:15px">क्या आप डॉक्टर से दोबारा बात करना चाहेंगे?</div>
+          <div class="opts" style="margin-top:12px">
+            <button class="opt" onclick="if(validateTextarea('s2l-detail','issueDetailLow')){ setCallback('हाँ'); go('s2l-detail','s3-calltime'); }">
+              <div class="oi" style="background:#e3f0ff;color:#1565c0">📞</div>
+              <div>हाँ, Call करें</div>
+            </button>
+            <button class="opt" onclick="if(validateTextarea('s2l-detail','issueDetailLow')){ setCallback('नहीं'); submitFeedback('s2l-detail'); }">
+              <div class="oi" style="background:#f7f9fc;color:#9ca3af">✗</div>
+              <div>नहीं</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- ══════════ SHARED SCREENS ══════════ -->
+
+        <!-- S3-CALLBACK -->
+        <div class="section" id="s3-callback">
+          <div class="confirm-box">अपना कीमती समय देने के लिए धन्यवाद! हमारी Team जल्द ही आपसे संपर्क करेगी।</div>
+          <div class="contact-box">
+            <div class="contact-title">किसी भी सहायता के लिए हमारी Team से संपर्क कर सकते हैं:</div>
+            <div class="contact-number">📞 82704 82704</div>
+          </div>
+          <button class="btn-submit" onclick="submitFeedback('s3-callback')">Submit करें →</button>
+        </div>
+
+        <!-- S3-CALLTIME -->
+        <div class="section" id="s3-calltime">
+          <div class="confirm-box">अपना कीमती समय देने के लिए धन्यवाद! हमारी Team जल्द ही आपसे संपर्क करेगी।</div>
+          <div class="contact-box">
+            <div class="contact-title">किसी भी सहायता के लिए संपर्क करें</div>
+            <div class="contact-number">📞 82704 82704</div>
+          </div>
+          <button class="btn-submit" onclick="submitFeedback('s3-calltime')">Submit करें →</button>
+        </div>
+
+        <!-- DONE (shown after form POST or JS redirect) -->
+        <div class="section" id="sdone">
+  %%[ IF @alreadySubmitted == 1 THEN ]%%
+
+      <div class="done-wrap">
+        <div class="done-h">आपका feedback पहले ही प्राप्त हो चुका है</div>
+        <div class="done-p">
+          धन्यवाद %%=v(@displayName)=%% 🙏<br/>
+          आपने पहले ही अपना feedback साझा किया है।
+        </div>
+        <div class="done-contact">📞 82704 82704</div>
+      </div>
+
+    %%[ ELSE ]%%
+
+      <div class="done-wrap">
+        <div class="done-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="done-h">धन्यवाद %%=v(@displayName)=%% 🙏</div>
+        <div class="done-p">
+          आपका अनुभव हमारे लिए बेहद महत्वपूर्ण है<br/>
+          और यह हमें सेवाओं को बेहतर बनाने में मदद करेगा।<br/><br/>
+          किसी भी सहायता के लिए आप हमसे संपर्क कर सकते हैं:
+        </div>
+        <div class="done-contact">📞 82704 82704</div>
+      </div>
+
+    %%[ ENDIF ]%%
+  </div>  
+
+      </div><!-- /card -->
+    </div><!-- /pg -->
+
+    <script>
+      /* ══════════════════════════════════════════════
+         STATE
+         ══════════════════════════════════════════════ */
+      var hist = [], cur = 's0', starVal = 0;
+
+      /* Collected values – written into hidden form before submit */
+      var collected = {
+        StarRating:        '',
+        FeedbackPath:      '',
+        PrimaryFeedback:   '',
+        OtherFeedbackText: '',
+        IssueDetail:       '',
+        WouldRecommend:    '',
+        CallbackRequested: '',
+        AdditionalFeedback:''
+      };
+
+      /* ══════════════════════════════════════════════
+         PROGRESS MAP
+         ══════════════════════════════════════════════ */
+      var pmap = {
+        s0: 5,
+        s1h: 25, s1m: 25,
+        's2h-recommend': 50, 's2m-detail': 50, 's2m-other': 50, 's2l-detail': 50,
+        's3h-yes-rec': 75, 's3h-no-rec': 75, 's3-calltime': 75, 's3-callback': 75,
+        sdone: 100
+      };
+
+      /* ══════════════════════════════════════════════
+         NAVIGATION
+         ══════════════════════════════════════════════ */
+      function show(id) {
+        document.querySelectorAll('.section').forEach(function(e) { e.classList.remove('on'); });
+        var el = document.getElementById(id);
+        if (el) el.classList.add('on');
+        cur = id;
+        document.getElementById('prog').style.width = (pmap[id] || 50) + '%';
+        document.getElementById('backbtn').className = (hist.length > 0 && id !== 'sdone') ? 'btn-back on' : 'btn-back';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function go(from, to) {
+        var allowed;
+        if (starVal === 2 || starVal === 3) {
+          allowed = ['s1m','s2m-detail','s2m-other','s3-callback','s3-calltime','sdone'];
+          if (allowed.indexOf(to) === -1) return;
+        }
+        if (starVal === 4 || starVal === 5) {
+          allowed = ['s1h','s2h-recommend','s3h-yes-rec','s3h-no-rec','sdone'];
+          if (allowed.indexOf(to) === -1) return;
+        }
+        hist.push(from);
+        show(to);
+      }
+
+      function goBack() {
+        if (hist.length > 0) {
+          var p = hist.pop();
+          document.querySelectorAll('.section').forEach(function(e) { e.classList.remove('on'); });
+          var el = document.getElementById(p);
+          if (el) el.classList.add('on');
+          cur = p;
+          document.getElementById('prog').style.width = (pmap[p] || 5) + '%';
+          document.getElementById('backbtn').className = hist.length > 0 ? 'btn-back on' : 'btn-back';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+
+      /* ══════════════════════════════════════════════
+         STAR RATING
+         ══════════════════════════════════════════════ */
+      function pickStar(n) {
+        starVal = n;
+        collected.StarRating = String(n);
+        var rows = document.getElementById('starrow').children;
+        for (var i = 0; i < rows.length; i++) {
+          rows[i].className = i < n ? 'star on' : 'star';
+        }
+        hist = ['s0'];
+        setTimeout(function() {
+          if (n === 4 || n === 5) {
+            collected.FeedbackPath = 'High';
+            show('s1h');
+          } else {
+            collected.FeedbackPath = 'Low';
+            show('s1m');
+          }
+        }, 300);
+      }
+
+      /* ══════════════════════════════════════════════
+         HELPERS – set collected values
+         ══════════════════════════════════════════════ */
+      function setPrimary(val) { collected.PrimaryFeedback = val; }
+      function setRecommend(val) { collected.WouldRecommend = val; }
+      function setCallback(val) { collected.CallbackRequested = val; }
+
+      /* ══════════════════════════════════════════════
+         HIGH PATH – option selection
+         ══════════════════════════════════════════════ */
+      function toggleOpt(el, group) {
+        var all = document.querySelectorAll('#s1h .opt');
+        var input = document.getElementById('otherInput');
+        var btn = document.getElementById('nextBtn');
+        all.forEach(function(o) { o.classList.remove('selected'); });
+        el.classList.add('selected');
+        input.style.display = 'none';
+        input.value = '';
+        collected.PrimaryFeedback = el.querySelector('div').textContent.trim();
+        collected.OtherFeedbackText = '';
+        btn.style.display = 'block';
+      }
+
+      function handleOther(el) {
+        var all = document.querySelectorAll('#s1h .opt');
+        var input = document.getElementById('otherInput');
+        var btn = document.getElementById('nextBtn');
+        all.forEach(function(o) { o.classList.remove('selected'); });
+        el.classList.add('selected');
+        input.style.display = 'block';
+        btn.style.display = 'block';
+        collected.PrimaryFeedback = 'अन्य';
+        setTimeout(function() { input.focus(); }, 100);
+      }
+
+      function validateAndGo() {
+        var opts = document.querySelectorAll('#s1h .opt');
+        var otherOpt = opts[opts.length - 1];
+        var input = document.getElementById('otherInput');
+        var error = document.getElementById('otherError');
+        if (otherOpt.classList.contains('selected') && !input.value.trim()) {
+          error.style.display = 'block';
+          input.focus();
+          return;
+        }
+        error.style.display = 'none';
+        collected.OtherFeedbackText = input.style.display !== 'none' ? input.value.trim() : '';
+        go('s1h', 's2h-recommend');
+      }
+
+      /* ══════════════════════════════════════════════
+         TEXTAREA VALIDATION
+         ══════════════════════════════════════════════ */
+      function validateTextarea(sectionId, textareaId) {
+        var textarea = textareaId
+          ? document.getElementById(textareaId)
+          : document.getElementById(sectionId).querySelector('textarea');
+        if (!textarea) return true;
+        if (!textarea.value.trim()) {
+          textarea.style.borderColor = '#ef9a9a';
+          textarea.focus();
+          return false;
+        }
+        textarea.style.borderColor = '';
+        /* Capture issue detail into collected */
+        collected.IssueDetail = textarea.value.trim();
+        return true;
+      }
+
+      /* ══════════════════════════════════════════════
+         SUBMIT FEEDBACK
+         Collects any final textarea, populates the
+         hidden form fields, then submits the form.
+         ══════════════════════════════════════════════ */
+      function submitFeedback(fromSection) {
+        /* Capture additional feedback textarea if present in current section */
+        var section = document.getElementById(fromSection);
+        var textarea = section ? section.querySelector('textarea') : null;
+
+        if (fromSection === 's3h-yes-rec') {
+          collected.AdditionalFeedback = document.getElementById('additionalHigh') ? document.getElementById('additionalHigh').value.trim() : '';
+        } else if (fromSection === 's3h-no-rec') {
+          collected.AdditionalFeedback = document.getElementById('additionalHighNo') ? document.getElementById('additionalHighNo').value.trim() : '';
+        } else if (textarea) {
+          /* For issue-detail sections already captured in validateTextarea,
+             this also catches any remaining textarea in the current section */
+          if (!collected.IssueDetail && textarea.value.trim()) {
+            collected.IssueDetail = textarea.value.trim();
+          }
+        }
+
+        /* Populate hidden form */
+        document.getElementById('f_StarRating').value         = collected.StarRating;
+        document.getElementById('f_FeedbackPath').value       = collected.FeedbackPath;
+        document.getElementById('f_PrimaryFeedback').value    = collected.PrimaryFeedback;
+        document.getElementById('f_OtherFeedbackText').value  = collected.OtherFeedbackText;
+        document.getElementById('f_IssueDetail').value        = collected.IssueDetail;
+        document.getElementById('f_WouldRecommend').value     = collected.WouldRecommend;
+        document.getElementById('f_CallbackRequested').value  = collected.CallbackRequested;
+        document.getElementById('f_AdditionalFeedback').value = collected.AdditionalFeedback;
+
+        /* Submit form – page reloads; AMPscript runs UpsertDE, then
+           since @starRating is SET the page auto-shows sdone below */
+        document.getElementById('feedbackForm').submit();
+      }
+      var alreadySubmitted = Number("%%=v(@alreadySubmitted)=%%");
+      var isSubmittedNow = Number("%%=v(@isSubmittedNow)=%%");
+
+      if (alreadySubmitted === 1 || isSubmittedNow === 1) {
+        show('sdone');
+      } else {
+        show('s0');
+      }
+
+      
+    </script>
+
+
+  </body>
+</html>

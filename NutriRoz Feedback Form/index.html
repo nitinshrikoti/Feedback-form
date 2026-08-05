@@ -1,0 +1,1385 @@
+%%[
+/* ═══════════════════════════════════════════════════════════
+   NUTRIROZ FEEDBACK — AMPscript Block
+═══════════════════════════════════════════════════════════ */
+
+VAR @submitted, @now, @oid, @accountId, @phone, @customerName
+SET @submitted    = RequestParameter("submitted")
+SET @now          = NOW()
+SET @oid          = RequestParameter("oid")
+
+IF EMPTY(@oid) THEN
+  SET @oid = "UNKNOWN"
+ENDIF
+
+/* ── Safe defaults ── */
+SET @accountId    = "NO_MATCH"
+SET @phone        = "NO_MATCH"
+SET @customerName = "आप"
+
+VAR @rows, @row
+
+SET @alreadySubmitted = "false"
+VAR @fbRows
+SET @fbRows = LookupRows("NutriRoz_Feedback", "OrderId", @oid)
+IF RowCount(@fbRows) > 0 THEN
+  SET @alreadySubmitted = "true"
+ENDIF
+
+SET @rows = LookupRows("NutriRoz","OrderId",@oid)
+
+IF RowCount(@rows) > 0 THEN
+  SET @row          = Row(@rows, 1)
+  SET @accountId    = Field(@row, "AccountId")
+  SET @phone        = Field(@row, "Phone")
+  SET @customerName = Field(@row, "Name")
+ENDIF
+
+/* ── Only write to DE when form is submitted ── */
+IF @submitted == "1" THEN
+
+  VAR @rating, @usedInAtta, @taste, @benefits, @reorderIntent
+  VAR @usageFreq, @notUsedReason, @notUsedOther, @retryHowTo
+  VAR @issueType, @issueOther, @retryTaste, @usageDuration
+  VAR @qualityText, @deliveryText, @recommend, @finalSuggestion
+  VAR @flowPath, @lastStep, @completionSec, @r1, @r2
+
+  SET @rating          = RequestParameter("Rating")
+  SET @usedInAtta      = RequestParameter("UsedInAtta")
+  SET @taste           = RequestParameter("TasteFeedback")
+  SET @benefits        = RequestParameter("Benefits")
+  SET @reorderIntent   = RequestParameter("ReorderIntent")
+  SET @usageFreq       = RequestParameter("UsageFrequency")
+  SET @notUsedReason   = RequestParameter("NotUsedReason")
+  SET @notUsedOther    = RequestParameter("NotUsedOtherText")
+  SET @retryHowTo      = RequestParameter("RetryIntent_HowTo")
+  SET @issueType       = RequestParameter("IssueType")
+  SET @issueOther      = RequestParameter("IssueOtherText")
+  SET @retryTaste      = RequestParameter("RetryIntent_Taste")
+  SET @usageDuration   = RequestParameter("UsageDuration")
+  SET @qualityText     = RequestParameter("QualityIssueText")
+  SET @deliveryText    = RequestParameter("DeliveryIssueText")
+  SET @recommend       = RequestParameter("Recommend")
+  SET @finalSuggestion = RequestParameter("FinalSuggestion")
+  SET @flowPath        = RequestParameter("FlowPath")
+  SET @lastStep        = RequestParameter("LastStep")
+  SET @completionSec   = RequestParameter("CompletionTimeSec")
+
+  InsertDE(
+  "NutriRoz_Feedback", 
+  "Id", @oid,
+
+  "AccountId",       @accountId,
+  "Phone",           @phone,
+  "OrderId",         @oid,
+  "SubmissionDate",  @now,
+  "Rating",          @rating,
+  "UsedInAtta",      @usedInAtta,
+  "TasteFeedback",   @taste,
+  "Benefits",        @benefits,
+  "ReorderIntent",   @reorderIntent,
+  "UsageFrequency",  @usageFreq,
+  "NotUsedReason",   @notUsedReason,
+  "NotUsedOtherText",@notUsedOther,
+  "RetryIntent_HowTo",@retryHowTo,
+  "IssueType",       @issueType,
+  "IssueOtherText",  @issueOther,
+  "RetryIntent_Taste",@retryTaste,
+  "UsageDuration",   @usageDuration,
+  "QualityIssueText",@qualityText,
+  "DeliveryIssueText",@deliveryText,
+  "Recommend",       @recommend,
+  "FinalSuggestion", @finalSuggestion,
+  "FlowPath",        @flowPath,
+  "LastStep",        @lastStep,
+  "Completed",       "true",
+  "CompletionTimeSec",@completionSec
+)
+
+ENDIF
+
+]%%
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#1d9e75" />
+    <title>NutriRoz — आपका अनुभव</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&display=swap");
+
+      :root {
+        --green-deep: #1d4a0a;
+        --green-mid: #27500a;
+        --green-brand: #1d9e75;
+        --green-light: #eaf3de;
+        --green-border: #97c459;
+        --green-pill: #c0dd97;
+        --amber: #ef9f27;
+        --amber-bg: #faeeda;
+        --amber-border: #d4850f;
+        --amber-text: #633806;
+        --red-bg: #faece7;
+        --red-border: #f0997b;
+        --red-text: #712b13;
+        --blue-bg: #e6f1fb;
+        --blue-border: #85b7eb;
+        --blue-text: #0c447c;
+        --purple-bg: #eeedfe;
+        --purple-border: #afa9ec;
+        --purple-text: #3c3489;
+        --neutral-bg: #f5f4ed;
+        --neutral-border: #dedddd;
+        --neutral-border-2: #b4b3ae;
+        --text-main: #111;
+        --text-sub: #6b6b6a;
+        --white: #ffffff;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --radius-xl: 18px;
+
+        /* Responsive spacing tokens */
+        --space-xs: 8px;
+        --space-sm: 12px;
+        --space-md: 16px;
+        --space-lg: 20px;
+        --space-xl: 24px;
+        --page-pad: 16px;
+        --card-pad: 20px;
+      }
+
+      /* ── Reset & Base ── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
+      body {
+        background: #f2f0e8;
+        font-family: "Noto Sans", sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--text-main);
+        /* Prevent horizontal scroll on mobile */
+        overflow-x: hidden;
+        /* Safe area insets for notched phones */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      /* ── Page wrapper ── */
+      .pg {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: var(--space-md) var(--page-pad) calc(5rem + env(safe-area-inset-bottom, 0px));
+      }
+
+      /* ── Logo ── */
+      .logo { text-align: center; margin-bottom: 14px; }
+      .logo img {
+        max-width: 150px;
+        width: 42vw;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+      }
+
+      /* ── Hero ── */
+      .hero {
+        background: var(--green-light);
+        border: 0.5px solid var(--green-border);
+        border-radius: var(--radius-xl);
+        padding: var(--card-pad);
+        margin-bottom: var(--space-md);
+      }
+      .hero h1 {
+        font-size: clamp(15px, 4vw, 18px);
+        font-weight: 600;
+        color: var(--green-mid);
+        margin-bottom: 7px;
+        line-height: 1.45;
+      }
+      .hero-sub {
+        font-size: clamp(12px, 3.2vw, 13px);
+        color: #3b6d11;
+        line-height: 1.75;
+        margin-bottom: 12px;
+      }
+      .cta-bar {
+        background: var(--green-mid);
+        border-radius: var(--radius-md);
+        padding: 9px 14px;
+        font-size: clamp(11.5px, 3vw, 13px);
+        color: var(--green-pill);
+        text-align: center;
+        font-weight: 500;
+        line-height: 1.5;
+      }
+
+      /* ── Card ── */
+      .card {
+        background: var(--white);
+        border: 0.5px solid var(--neutral-border);
+        border-radius: var(--radius-xl);
+        padding: var(--card-pad);
+        margin-bottom: var(--space-md);
+      }
+
+      /* ── Progress bar ── */
+      .pbar {
+        height: 5px;
+        background: var(--neutral-border);
+        border-radius: 3px;
+        margin-bottom: var(--space-lg);
+        overflow: hidden;
+      }
+      .pfill {
+        height: 5px;
+        background: var(--green-brand);
+        border-radius: 3px;
+        transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+      }
+
+      /* ── Back button ── */
+      .btn-back {
+        background: none;
+        border: none;
+        font-size: 12px;
+        color: var(--text-sub);
+        cursor: pointer;
+        padding: 4px 0;
+        margin-bottom: var(--space-sm);
+        display: none;
+        align-items: center;
+        gap: 4px;
+        font-family: inherit;
+        /* Larger tap target */
+        min-height: 44px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn-back.on { display: inline-flex; }
+
+      /* ── Sections ── */
+      .sec { display: none; }
+      .sec.on { display: block; animation: fadein 0.22s ease; }
+      @keyframes fadein {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: none; }
+      }
+
+      /* ── Question text ── */
+      .q-text {
+        font-size: clamp(14px, 3.8vw, 16px);
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 4px;
+        line-height: 1.5;
+      }
+      .q-hint {
+        font-size: clamp(11.5px, 3vw, 12.5px);
+        color: var(--text-sub);
+        margin-bottom: var(--space-sm);
+        line-height: 1.55;
+      }
+
+      /* ── Star rating ── */
+      .stars-row {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 6px;
+      }
+      .star {
+        flex: 1;
+        /* Ensure minimum tap target size */
+        min-height: 60px;
+        padding: 10px 2px 8px;
+        border-radius: var(--radius-md);
+        border: 0.5px solid var(--neutral-border-2);
+        background: var(--neutral-bg);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        transition: all 0.15s;
+        font-size: clamp(14px, 4vw, 18px);
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+      .star .lbl {
+        font-size: clamp(9px, 2.5vw, 10px);
+        color: var(--text-sub);
+      }
+      .star:hover  { background: var(--amber-bg); border-color: var(--amber); }
+      .star:active { background: var(--amber-bg); border-color: var(--amber); transform: scale(0.96); }
+      .star.on     { background: var(--amber-bg); border-color: var(--amber-border); }
+      .star.on .lbl { color: #854f0b; }
+
+      .star-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: var(--space-sm);
+      }
+      .star-labels span {
+        font-size: clamp(10px, 2.6vw, 11px);
+        color: var(--text-sub);
+      }
+
+      /* ── Option buttons ── */
+      .opts { display: flex; flex-direction: column; gap: 8px; }
+      .opt {
+        /* Minimum tap target */
+        min-height: 48px;
+        padding: 12px 14px;
+        border-radius: var(--radius-md);
+        border: 0.5px solid var(--neutral-border-2);
+        background: var(--neutral-bg);
+        font-size: clamp(13px, 3.5vw, 14px);
+        color: var(--text-main);
+        cursor: pointer;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        transition: all 0.15s;
+        line-height: 1.45;
+        font-family: inherit;
+        width: 100%;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        /* Prevent layout shift on active state */
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .oi {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: clamp(14px, 3.5vw, 16px);
+      }
+      .opt:hover, .opt.sel { background: #e0f4ee; border-color: #5dcaa5; color: #085041; }
+      .opt:active           { background: #d0ece5; border-color: #5dcaa5; transform: scale(0.99); }
+      .opt-sub { font-size: clamp(10.5px, 2.8vw, 11.5px); color: var(--text-sub); margin-top: 2px; }
+
+      /* ── Emoji grid ── */
+      .emoji-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: var(--space-md);
+      }
+      .emoji-opt {
+        min-height: 64px;
+        padding: 12px 6px 10px;
+        border-radius: var(--radius-md);
+        border: 0.5px solid var(--neutral-border-2);
+        background: var(--neutral-bg);
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.15s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+      .emoji-opt .etxt {
+        font-size: clamp(11px, 3vw, 12px);
+        color: var(--text-main);
+        line-height: 1.35;
+      }
+      .emoji-opt:hover  { background: #e0f4ee; border-color: #5dcaa5; }
+      .emoji-opt:active { background: #d0ece5; }
+      .emoji-opt.sel    { background: #e0f4ee; border-color: var(--green-brand); }
+
+      /* ── Prose / info panels ── */
+      .pr {
+        border-radius: var(--radius-md);
+        padding: 12px 14px;
+        font-size: clamp(12.5px, 3.3vw, 13.5px);
+        line-height: 1.7;
+        margin-bottom: var(--space-sm);
+      }
+      .pr.good   { background: var(--green-light); border: 0.5px solid var(--green-border); color: var(--green-mid); }
+      .pr.warn   { background: var(--amber-bg);    border: 0.5px solid var(--amber);         color: var(--amber-text); }
+      .pr.sad    { background: var(--red-bg);      border: 0.5px solid var(--red-border);    color: var(--red-text); }
+      .pr.info   { background: var(--blue-bg);     border: 0.5px solid var(--blue-border);   color: var(--blue-text); }
+      .pr strong { font-weight: 600; }
+
+      /* ── Tip box ── */
+      .tip-box {
+        background: var(--purple-bg);
+        border: 0.5px solid var(--purple-border);
+        border-radius: var(--radius-md);
+        padding: 14px 15px;
+        margin-bottom: var(--space-sm);
+      }
+      .tip-title {
+        font-size: clamp(11.5px, 3vw, 12px);
+        color: var(--purple-text);
+        margin-bottom: 9px;
+        letter-spacing: 0.03em;
+        line-height: 1.6;
+      }
+      .tip-step {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: clamp(12px, 3.2vw, 13px);
+        color: #534ab7;
+        margin-bottom: 6px;
+        line-height: 1.5;
+      }
+      .tip-num {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #534ab7;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .tip-box a {
+        color: #534ab7;
+        word-break: break-word;
+      }
+
+      /* ── Field label ── */
+      .fl {
+        font-size: clamp(12px, 3.2vw, 13px);
+        color: var(--text-sub);
+        margin-bottom: 6px;
+        margin-top: 14px;
+      }
+
+      /* ── Textarea ── */
+      .tx {
+        width: 100%;
+        padding: 11px 13px;
+        border-radius: var(--radius-md);
+        border: 0.5px solid var(--neutral-border-2);
+        background: var(--neutral-bg);
+        font-size: clamp(13px, 3.5vw, 14px);
+        color: var(--text-main);
+        font-family: inherit;
+        resize: vertical;
+        min-height: 88px;
+        /* iOS removes inner shadow on inputs */
+        -webkit-appearance: none;
+        appearance: none;
+        line-height: 1.55;
+      }
+      .tx:focus {
+        outline: none;
+        border-color: var(--green-brand);
+      }
+
+      /* ── Primary CTA ── */
+      .btn-go {
+        width: 100%;
+        min-height: 52px;
+        padding: 14px;
+        border-radius: var(--radius-md);
+        border: none;
+        background: var(--green-brand);
+        font-size: clamp(14px, 3.8vw, 15px);
+        font-weight: 600;
+        color: #fff;
+        cursor: pointer;
+        margin-top: var(--space-sm);
+        transition: background 0.15s;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+        /* Prevent double-tap zoom on iOS */
+        touch-action: manipulation;
+      }
+      .btn-go:hover  { background: #0f6e56; }
+      .btn-go:active { background: #0a5544; transform: scale(0.99); }
+
+      /* ── Secondary "next" button ── */
+      .btn-next {
+        min-height: 44px;
+        padding: 10px 20px;
+        border-radius: var(--radius-md);
+        border: 0.5px solid var(--neutral-border-2);
+        background: var(--neutral-bg);
+        font-size: clamp(13px, 3.5vw, 14px);
+        color: var(--text-main);
+        cursor: pointer;
+        margin-top: 10px;
+        transition: all 0.15s;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        display: inline-block;
+      }
+      .btn-next:hover  { background: #e0f4ee; border-color: var(--green-brand); color: #085041; }
+      .btn-next:active { background: #d0ece5; }
+
+      /* ── Share box ── */
+      .share-box {
+        background: var(--blue-bg);
+        border: 0.5px solid var(--blue-border);
+        border-radius: var(--radius-md);
+        padding: 15px;
+        margin-bottom: var(--space-sm);
+      }
+      .share-title { font-size: clamp(12px, 3.2vw, 13px); font-weight: 600; color: var(--blue-text); margin-bottom: 4px; }
+      .share-sub   { font-size: clamp(12px, 3.2vw, 13px); color: #185fa5; line-height: 1.6; margin-bottom: 12px; }
+      .share-btns  { display: flex; gap: 8px; flex-wrap: wrap; }
+      .share-btn {
+        min-height: 44px;
+        padding: 8px 14px;
+        border-radius: var(--radius-md);
+        border: 0.5px solid var(--blue-border);
+        background: var(--white);
+        font-size: clamp(12px, 3.2vw, 13px);
+        color: #185fa5;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      .share-btn:hover { background: var(--blue-bg); }
+
+      /* ── Chip grid ── */
+      .chip-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: var(--space-sm); }
+      .chip {
+        min-height: 40px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        border: 0.5px solid var(--neutral-border-2);
+        background: var(--neutral-bg);
+        font-size: clamp(12px, 3.2vw, 13px);
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        user-select: none;
+      }
+      .chip:hover  { background: #e0f4ee; border-color: #5dcaa5; }
+      .chip:active { background: #d0ece5; }
+      .chip.sel    { background: var(--green-light); border-color: var(--green-brand); color: var(--green-mid); font-weight: 500; }
+
+      /* ── Done / thank-you screen ── */
+      .done-wrap { text-align: center; padding: 2rem 0.5rem; }
+      .done-anim {
+        width: 72px; height: 72px;
+        border-radius: 50%;
+        background: var(--green-light);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+        animation: pop 0.4s cubic-bezier(0.18,0.89,0.32,1.28);
+      }
+      @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      .done-anim svg { width: 32px; height: 32px; }
+      .done-h { font-size: clamp(17px, 4.5vw, 20px); font-weight: 600; color: var(--text-main); margin-bottom: 10px; line-height: 1.4; }
+      .done-p { font-size: clamp(13px, 3.5vw, 14px); color: var(--text-sub); line-height: 1.85; }
+      .done-tag {
+        display: inline-block;
+        background: var(--green-light);
+        color: var(--green-mid);
+        font-size: clamp(11.5px, 3vw, 13px);
+        font-weight: 500;
+        padding: 6px 18px;
+        border-radius: 20px;
+        margin-top: 16px;
+        line-height: 1.5;
+      }
+
+      /* ── Submitting spinner overlay ── */
+      .submit-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,0.88);
+        z-index: 999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .submit-overlay.on { display: flex; }
+      .spinner {
+        width: 36px; height: 36px;
+        border: 3px solid var(--neutral-border);
+        border-top-color: var(--green-brand);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .submit-msg { font-size: clamp(13px, 3.5vw, 14px); color: var(--text-sub); font-family: "Noto Sans", sans-serif; }
+
+      /* ════════════════════════════════════
+         RESPONSIVE BREAKPOINTS
+      ════════════════════════════════════ */
+
+      /* ── Very small phones (≤ 360px) ── */
+      @media (max-width: 360px) {
+        :root {
+          --page-pad: 12px;
+          --card-pad: 14px;
+        }
+        .stars-row { gap: 4px; }
+        .star { min-height: 54px; }
+        .emoji-grid { gap: 6px; }
+        .opts { gap: 6px; }
+        .chip-grid { gap: 5px; }
+        .chip { padding: 7px 11px; }
+        .share-btns { flex-direction: column; }
+        .share-btn  { width: 100%; justify-content: center; }
+      }
+
+      /* ── Standard phones (361px – 480px) – already good ── */
+      @media (min-width: 361px) and (max-width: 480px) {
+        .share-btns { gap: 6px; }
+      }
+
+      /* ── Landscape phones ── */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .pg { padding-top: 10px; padding-bottom: 3rem; }
+        .hero { padding: 12px 14px; margin-bottom: 10px; }
+        .hero-sub { margin-bottom: 8px; }
+        .logo { margin-bottom: 8px; }
+        .logo img { max-width: 120px; }
+        .done-wrap { padding: 1rem 0.5rem; }
+      }
+
+      /* ── Tablets and larger (≥ 600px) ── */
+      @media (min-width: 600px) {
+        :root {
+          --page-pad: 24px;
+          --card-pad: 28px;
+        }
+        .pg { padding-top: 24px; }
+        .logo img { max-width: 180px; }
+        .star { min-height: 68px; }
+        .emoji-grid { gap: 10px; }
+        .opts { gap: 10px; }
+        .chip-grid { gap: 8px; }
+        .btn-go { min-height: 56px; font-size: 16px; }
+      }
+
+      /* ── Accessibility: reduced motion ── */
+      @media (prefers-reduced-motion: reduce) {
+        .sec.on      { animation: none; }
+        .pfill       { transition: none; }
+        .done-anim   { animation: none; }
+        .spinner     { animation: spin 1.4s linear infinite; }
+        .opt, .chip, .star, .emoji-opt, .btn-go, .btn-next, .share-btn {
+          transition: none;
+        }
+      }
+
+      /* ── Dark mode (respects system preference) ── */
+      @media (prefers-color-scheme: dark) {
+        /* Intentionally not inverted — brand page keeps its light theme */
+        /* (Remove this block if you want dark mode support) */
+      }
+
+      /* ── Print ── */
+      @media print {
+        .submit-overlay { display: none !important; }
+        .btn-go, .btn-next, .btn-back, .share-btns { display: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+
+ %%[ IF @alreadySubmitted == "true" AND @submitted != "1" THEN ]%%
+
+<div class="pg">
+  <div class="logo">
+    <img src="https://image.marketing.jeenasikho.com/lib/fe2d117473640474771173/m/1/7ba0d21d-ea59-4ac0-9fa0-213c3f25cf9e.png" alt="NutriRoz Logo" />
+  </div>
+  <div class="card">
+    <div class="done-wrap">
+      <div class="done-anim">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <div class="done-h">%%=v(@customerName)=%% जी, आपका फ़ीडबैक पहले से दर्ज है! 🙏</div>
+      <div class="done-p">
+        आपने पहले ही NutriRoz के बारे में अपनी राय साझा कर दी है।<br /><br />
+        आपके सुझाव हमें बेहतर बनने में मदद करते हैं।<br />
+        NutriRoz के साथ स्वस्थ और खुशहाल रहें! 🌿
+      </div>
+      <div class="done-tag">NutriRoz — पोषण की शक्ति, रोज़ की थाली में</div>
+    </div>
+  </div>
+</div>
+
+%%[ ELSEIF @submitted == "1" THEN ]%%
+
+  <div class="pg">
+    <div class="logo">
+      <img src="https://image.marketing.jeenasikho.com/lib/fe2d117473640474771173/m/1/7ba0d21d-ea59-4ac0-9fa0-213c3f25cf9e.png" alt="NutriRoz Logo" />
+    </div>
+    <div class="card">
+      <div class="done-wrap">
+        <div class="done-anim">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <div class="done-h">शुक्रिया, %%=v(@customerName)=%% जी! 🙏</div>
+        <div class="done-p">
+          आपकी प्रतिक्रिया हमें मिल गई है।<br />
+          आपका हर सुझाव NutriRoz को और बेहतर बनाता है।<br /><br />
+          NutriRoz के साथ स्वस्थ और खुशहाल रहें! 🌿
+        </div>
+        <div class="done-tag">NutriRoz — पोषण की शक्ति, रोज़ की थाली में</div>
+      </div>
+    </div>
+  </div>
+
+  %%[ ELSE ]%%
+
+  <!-- <div class="submit-overlay" id="submitOverlay">
+    <div class="spinner"></div>
+    <div class="submit-msg">आपका जवाब सुरक्षित किया जा रहा है...</div>
+  </div> -->
+
+  <div class="pg">
+    <div class="logo">
+      <img src="https://image.marketing.jeenasikho.com/lib/fe2d117473640474771173/m/1/7ba0d21d-ea59-4ac0-9fa0-213c3f25cf9e.png" alt="NutriRoz Logo" />
+    </div>
+
+    <div class="hero">
+      <h1>%%=v(@customerName)=%% जी, NutriRoz खरीदने के लिए धन्यवाद!</h1>
+      <div class="hero-sub">
+        आशा है कि आपको NutriRoz के इस्तेमाल से लाभ मिल रहा होगा। NutriRoz
+        सिर्फ एक powder नहीं — यह आपकी रसोई में एक छोटा सा बदलाव है जो परिवार
+        की सेहत पर बड़ा असर करता है।<br /><br />
+        अनाज, दालें और आयुर्वेदिक जड़ी-बूटियों का यह मिश्रण रोज़ की रोटी को
+        प्रोटीन, विटामिन और एंटीऑक्सीडेंट से भरपूर बनाता है — बिना स्वाद बदले,
+        बिना दिनचर्या बदले।
+      </div>
+      <div class="cta-bar">हम आपको बेहतरीन सेवाएँ दे सकें, इसलिए हमारे साथ अपना अनुभव साझा करें।</div>
+    </div>
+
+    <form id="sfmcForm" method="POST">
+      <input type="hidden" name="submitted"          value="1">
+      <input type="hidden" name="Rating"             id="f_Rating">
+      <input type="hidden" name="UsedInAtta"         id="f_UsedInAtta">
+      <input type="hidden" name="TasteFeedback"      id="f_TasteFeedback">
+      <input type="hidden" name="Benefits"           id="f_Benefits">
+      <input type="hidden" name="ReorderIntent"      id="f_ReorderIntent">
+      <input type="hidden" name="UsageFrequency"     id="f_UsageFrequency">
+      <input type="hidden" name="NotUsedReason"      id="f_NotUsedReason">
+      <input type="hidden" name="NotUsedOtherText"   id="f_NotUsedOtherText">
+      <input type="hidden" name="RetryIntent_HowTo"  id="f_RetryIntent_HowTo">
+      <input type="hidden" name="IssueType"          id="f_IssueType">
+      <input type="hidden" name="IssueOtherText"     id="f_IssueOtherText">
+      <input type="hidden" name="RetryIntent_Taste"  id="f_RetryIntent_Taste">
+      <input type="hidden" name="UsageDuration"      id="f_UsageDuration">
+      <input type="hidden" name="QualityIssueText"   id="f_QualityIssueText">
+      <input type="hidden" name="DeliveryIssueText"  id="f_DeliveryIssueText">
+      <input type="hidden" name="Recommend"          id="f_Recommend">
+      <input type="hidden" name="FinalSuggestion"    id="f_FinalSuggestion">
+      <input type="hidden" name="FlowPath"           id="f_FlowPath">
+      <input type="hidden" name="LastStep"           id="f_LastStep">
+      <input type="hidden" name="CompletionTimeSec"  id="f_CompletionTimeSec">
+    </form>
+
+    <div class="card">
+      <div class="pbar"><div class="pfill" id="prog" style="width:5%"></div></div>
+      <button class="btn-back" id="backbtn" onclick="goBack()">← वापस जाएं</button>
+
+      <!-- S0 — STAR RATING -->
+      <div class="sec on" id="s0">
+        <div class="q-text">आप NutriRoz को कितने Stars देना चाहेंगे?</div>
+        <div class="stars-row" id="starrow">
+          <div class="star" onclick="pickStar(1)"><span>★</span><span class="lbl">1</span></div>
+          <div class="star" onclick="pickStar(2)"><span>★★</span><span class="lbl">2</span></div>
+          <div class="star" onclick="pickStar(3)"><span>★★★</span><span class="lbl">3</span></div>
+          <div class="star" onclick="pickStar(4)"><span>★★★★</span><span class="lbl">4</span></div>
+          <div class="star" onclick="pickStar(5)"><span>★★★★★</span><span class="lbl">5</span></div>
+        </div>
+        <div class="star-labels"><span>बिल्कुल पसंद नहीं</span><span>बेहद पसंद!</span></div>
+      </div>
+
+      <!-- HIGH PATH (4–5 Stars) -->
+      <div class="sec" id="h-q2">
+        <div class="pr good">धन्यवाद! हमें खुशी है कि आपका अनुभव अच्छा रहा। हम आगे भी आपको बेहतर सेवा देने की कोशिश करेंगे।</div>
+        <div class="q-text">क्या आपने NutriRoz को Atta में मिलाकर Roti बनाई?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-q2','made')"><div>हाँ, बना ली!</div></div>
+          <div class="opt" onclick="pick('h-q2','notyet')"><div>अभी तक नहीं बनाई</div></div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-q3-taste">
+        <div class="q-text">NutriRoz मिलाकर बनाई Roti का स्वाद कैसा लगा?</div>
+        <div class="emoji-grid">
+          <div class="emoji-opt" onclick="pick('h-q3-taste','great')"><div class="etxt">बहुत अच्छा लगा!</div></div>
+          <div class="emoji-opt" onclick="pick('h-q3-taste','ok')"><div class="etxt">सामान्य — कोई फर्क नहीं</div></div>
+          <div class="emoji-opt" onclick="pick('h-q3-taste','different')"><div class="etxt">थोड़ा अलग था</div></div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-benefits">
+        <div class="pr good">बहुत खुशी हुई कि आपको NutriRoz पसंद आया!<br />ऐसे ही नियमित इस्तेमाल जारी रखें — बेहतर परिणाम मिलते रहेंगे।</div>
+        <div class="q-text">कौन से बदलाव आपने महसूस किए?</div>
+        <div class="chip-grid" id="benefit-chips">
+          <button class="chip" onclick="toggleChip(this,'energy')">ऊर्जा बढ़ी</button>
+          <button class="chip" onclick="toggleChip(this,'digestion')">पाचन बेहतर हुआ</button>
+          <button class="chip" onclick="toggleChip(this,'fullness')">पेट जल्दी भरा</button>
+          <button class="chip" onclick="toggleChip(this,'skin')">त्वचा में निखार</button>
+          <button class="chip" onclick="toggleChip(this,'weight')">वज़न में फर्क</button>
+          <button class="chip" onclick="toggleChip(this,'immunity')">कम बीमार पड़ी</button>
+          <button class="chip" onclick="toggleChip(this,'nochange')">अभी तक नहीं पता</button>
+        </div>
+        <button class="btn-next" onclick="validateBenefits()">आगे बढ़ें →</button>
+      </div>
+
+      <div class="sec" id="h-reorder">
+        <div class="q-text">क्या आप NutriRoz दोबारा खरीदना चाहेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-reorder','yes')">हाँ</div>
+          <div class="opt" onclick="pick('h-reorder','no')">अभी नहीं</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-reorder-thinking">
+        <div class="pr warn">समझ सकते हैं! सही जानकारी से फैसला आसान हो जाता है।</div>
+        <div class="q-text">क्या बात आपको रोक रही है?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-reorder-thinking','price')"><div class="oi" style="background:#faeeda;color:#633806">💰</div>कीमत थोड़ी ज़्यादा लगती है</div>
+          <div class="opt" onclick="pick('h-reorder-thinking','results')"><div class="oi" style="background:#faeeda;color:#633806">⏳</div>अभी तक ज़्यादा फर्क नहीं दिखा</div>
+          <div class="opt" onclick="pick('h-reorder-thinking','regular')"><div class="oi" style="background:#f1efe8;color:#5f5e5a">📅</div>नियमित रूप से इस्तेमाल नहीं हो पाया</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-bad-taste">
+        <div class="tip-box">
+          <div class="tip-title">शुरुआत में हल्का फर्क महसूस होना बिल्कुल सामान्य है।</div>
+          <div class="tip-step"><div class="tip-num">1</div><div>शुरुआत में <strong>1 scoop</strong> से शुरू करें (ज़्यादा नहीं)</div></div>
+          <div class="tip-step"><div class="tip-num">2</div><div>3–4 दिन में taste अपने आप develop होता है</div></div>
+          <div class="tip-step"><div class="tip-num">3</div><div>आटे में मिलाने के <strong>20 मिनट बाद</strong> रोटी बनाएं — ज़्यादा नरम बनेगी</div></div>
+        </div>
+        <div class="q-text">आप आमतौर पर NutriRoz कितनी बार इस्तेमाल करते हैं?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-bad-taste','daily')">रोज़ाना</div>
+          <div class="opt" onclick="pick('h-bad-taste','2-3TimesInAWeek')">हफ्ते में 2–3 बार</div>
+          <div class="opt" onclick="pick('h-bad-taste','rare')">कभी-कभी</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-ok">
+        <div class="pr warn">हमें खुशी है कि आपको कोई अलग स्वाद नहीं लगा!<br /><br />NutriRoz को इसी तरह बनाया गया है ताकि आपकी रोटी को 33 जड़ी-बूटियों का पूरा पोषण मिले, लेकिन आपका स्वाद बिल्कुल न बदले।</div>
+        <div class="q-text">आप आमतौर पर NutriRoz कितनी बार इस्तेमाल करते हैं?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-ok','daily')">रोज़ाना — हर रोटी में</div>
+          <div class="opt" onclick="pick('h-ok','2-3TimesInAWeek')">हफ्ते में 2–3 बार</div>
+          <div class="opt" onclick="pick('h-ok','rare')">कभी-कभी</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-notyet">
+        <div class="pr warn">कोई बात नहीं। शुरुआत में 1 scoop आटे में मिलाकर रोटी बनाएं — यह सबसे आसान तरीका है।</div>
+        <div class="q-text">आपने अभी तक Nutriroz का इस्तेमाल क्यों नहीं किया?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-notyet','time')"><div>समय नहीं मिला</div></div>
+          <div class="opt" onclick="pick('h-notyet','howto')"><div>इस्तेमाल करना नहीं आया</div></div>
+          <div class="opt" onclick="pick('h-notyet','other')"><div>अन्य कारण</div></div>
+        </div>
+        <textarea class="tx" id="notyet-other-tx" placeholder="कारण यहाँ लिखें..." style="display:none;margin-top:10px"></textarea>
+        <button class="btn-next" id="notyet-other-btn" onclick="if(validateTextarea('notyet-other-tx')) pick('h-notyet','other-go');" style="display:none">आगे बढ़ें →</button>
+      </div>
+
+      <div class="sec" id="h-time">
+        <div class="tip-box">
+          <div class="tip-title">बस 30 सेकंड का काम है!</div>
+          <div class="tip-step"><div class="tip-num">1</div><div>जब भी आटा गूंदें, बस <strong>1–2 scoop</strong> मिला दें</div></div>
+          <div class="tip-step"><div class="tip-num">2</div><div>अलग से कुछ नहीं करना — रोटी वैसे ही बनेगी</div></div>
+          <div class="tip-step"><div class="tip-num">3</div><div>Pack kitchen counter पर रखें — याद रहेगा!</div></div>
+        </div>
+        <div class="q-text">क्या आप NutriRoz को किसी दोस्त या परिवार को Recommend करेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-rec','yes')"><div>हाँ</div></div>
+          <div class="opt" onclick="pick('h-rec','no')">नहीं</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-other-rec">
+        <div class="q-text">क्या आप NutriRoz को किसी दोस्त या परिवार को Recommend करेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-rec','yes')"><div>हाँ</div></div>
+          <div class="opt" onclick="pick('h-rec','no')">नहीं</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-howto">
+        <div class="tip-box">
+          <div class="tip-title">NutriRoz इस्तेमाल करना बेहद आसान है! आप NutriRoz को रोटी, केक, पिज़्ज़ा, पराठा या पूरी के आटे में मिला सकते हैं — या फिर दाल, सब्ज़ी, पुलाव, स्मूदी, दाल-चावल, डोसा और चीला बैटर बनाते वक्त भी इसे आसानी से add कर सकते हैं।<br /><br />🎬 <a href="https://www.youtube.com/watch?v=fLR5hcfLTQo" target="_blank" rel="noopener noreferrer">इस्तेमाल का तरीका वीडियो में देखें</a></div>
+        </div>
+        <div class="q-text">क्या आप दिए गए सुझावों के साथ Nutriroz को फिर से इस्तेमाल करना चाहेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-howto','yes')">हाँ</div>
+          <div class="opt" onclick="pick('h-howto','unsure')">नहीं</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-howto-no">
+        <div class="pr warn">कोई बात नहीं! कभी-कभी नई चीज़ अपनाने में थोड़ा वक्त लगता है। NutriRoz को 1 scoop से शुरू करें न स्वाद बदलेगा, न तरीका। बस पोषण बढ़ेगा। जब मन हो, ज़रूर try करें!</div>
+        <div class="q-text">क्या आप NutriRoz को किसी दोस्त या परिवार को Recommend करेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-rec','yes')"><div>हाँ</div></div>
+          <div class="opt" onclick="pick('h-rec','no')">नहीं</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-fear">
+        <div class="pr good">NutriRoz मिलाने के बाद रोटी का रंग और स्वाद लगभग वैसा ही रहता है।</div>
+        <div class="q-text">क्या आप Nutriroz की पूरी जानकारी के लिए हमारी टीम से बात करना चाहेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-fear','yes')">हाँ</div>
+          <div class="opt" onclick="pick('h-fear','no')">नहीं</div>
+        </div>
+      </div>
+
+      <div class="sec" id="h-rec">
+        <div class="q-text">क्या आप NutriRoz को किसी दोस्त या परिवार को Recommend करेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('h-rec','yes')"><div>हाँ</div></div>
+          <div class="opt" onclick="pick('h-rec','no')">नहीं</div>
+        </div>
+      </div>
+
+      <!-- LOW PATH (1–3 Stars) -->
+      <div class="sec" id="low-q2">
+        <div class="pr sad">हमें खेद है कि आपका अनुभव अच्छा नहीं रहा।</div>
+        <div class="q-text">कृपया बताएं आपको किस बात से निराशा हुई?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('low-q2','taste')"><div>स्वाद अच्छा नहीं लगा</div></div>
+          <div class="opt" onclick="pick('low-q2','nobenefit')"><div>कोई फायदा नहीं हुआ</div></div>
+          <div class="opt" onclick="pick('low-q2','quality')"><div>Product की quality ठीक नहीं लगी</div></div>
+          <div class="opt" onclick="pick('low-q2','delivery')"><div>Delivery या Packaging की समस्या</div></div>
+          <div class="opt" onclick="pick('low-q2','other')">अन्य समस्या</div>
+        </div>
+        <textarea class="tx" id="low-other-tx" placeholder="समस्या यहाँ लिखें..." style="display:none;margin-top:10px"></textarea>
+        <button class="btn-next" id="low-other-btn" onclick="handleLowOther()" style="display:none">आगे बढ़ें →</button>
+      </div>
+
+      <div class="sec" id="low-price">
+        <div class="pr warn">NutriRoz 33 पोषक तत्वों से भरपूर प्रोडक्ट है, इसलिए इसकी गुणवत्ता बनाए रखने पर खास ध्यान दिया जाता है।</div>
+        <div class="q-text">आपका आमतौर पर 1 महीने का nutrition budget कितना होता है?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('low-price','u500')">₹300–500</div>
+          <div class="opt" onclick="pick('low-price','u1000')">₹500–1000</div>
+          <div class="opt" onclick="pick('low-price','o1000')">₹1000+</div>
+        </div>
+      </div>
+
+      <div class="sec" id="low-taste">
+        <div class="tip-box">
+          <div class="tip-title">यह बिल्कुल सामान्य है! NutriRoz में 33 असली जड़ी-बूटियाँ हैं,इसलिए पहली बार में स्वाद में हल्का बदलाव महसूस हो सकता है। <br><br> <strong>Taste improve करने के आसान तरीके:</strong></div>
+          <div class="tip-step"><div class="tip-num">1</div><div>शुरुआत में <strong>सिर्फ 1 scoop</strong> से शुरू करें</div></div>
+          <div class="tip-step"><div class="tip-num">2</div><div>आटा गूंदकर <strong>20 मिनट रखें</strong> — taste काफी बेहतर हो जाता है</div></div>
+          <div class="tip-step"><div class="tip-num">3</div><div>थोड़ा घी या जीरा मिलाएं — रोटी और स्वादिष्ट बनेगी</div></div>
+        </div>
+        <div class="q-text">क्या आप दिए गए सुझावों के साथ Nutriroz को फिर इस्तेमाल करना चाहेंगे?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('low-taste','try')">हाँ</div>
+          <div class="opt" onclick="pick('low-taste','no')">नहीं</div>
+        </div>
+      </div>
+
+      <div class="sec" id="low-nobenefit">
+        <div class="pr sad">हमें खेद है कि आपको लाभ महसूस नहीं हुआ।</div>
+        <div class="q-text">आप NutriRoz कितने समय से इस्तेमाल कर रहे हैं?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('low-nobenefit','fewDays')"><div class="oi" style="background:#faeeda;color:#633806">📅</div>अभी कुछ दिनों से</div>
+          <div class="opt" onclick="pick('low-nobenefit','lastOneWeek')"><div class="oi" style="background:#faeeda;color:#633806">📅</div>पिछले 1 हफ्ते से</div>
+        </div>
+      </div>
+
+      <div class="sec" id="low-quality">
+        <div class="pr sad">हमें खेद है कि Product आपको पसंद नहीं आया।</div>
+        <div class="q-text">Quality में क्या issue था?</div>
+        <textarea id="quality-issue" class="tx" placeholder="जैसे: smell, color, texture, या कुछ और..."></textarea>
+        <button class="btn-next" onclick="if(validateTextarea('quality-issue')) pick('low-quality','done');" style="margin-top:10px">आगे बढ़ें →</button>
+      </div>
+
+      <div class="sec" id="low-delivery">
+        <div class="pr warn">हमें खेद है कि delivery या packaging में कोई समस्या हुई। हम इस पर ध्यान देंगे।</div>
+        <div class="q-text">समस्या बताएं ताकि हम सुधार कर सकें:</div>
+        <textarea id="give-time" class="tx" placeholder="जैसे: pack टूटा हुआ था, देर से आई, गलत product आया..."></textarea>
+        <button class="btn-next" onclick="if(validateTextarea('give-time')) pick('low-delivery','done');" style="margin-top:10px">आगे बढ़ें →</button>
+      </div>
+
+      <div class="sec" id="low-rec">
+        <div class="pr warn">बहुत बढ़िया। किसी भी समस्या के लिए आप हमारी टीम से कभी भी संपर्क कर सकते हैं।</div>
+        <div class="q-text">क्या आप हमें अपनी कोई राय या सुझाव देना चाहेंगे?</div>
+        <textarea id="suggestion" class="tx" placeholder="जो भी मन में हो, लिखें..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion')) submitAndDone('suggestion');">Submit करें →</button>
+      </div>
+
+      <div class="sec" id="low-taste-no">
+        <div class="pr warn">हम आपकी बात समझते हैं। हम प्रयास करेंगे कि आगे आपका अनुभव और बेहतर हो। किसी भी समस्या के लिए आप हमारी टीम से बात कर सकते हैं।</div>
+        <div class="q-text">क्या आप हमें अपनी कोई राय या सुझाव देना चाहेंगे?</div>
+        <textarea id="suggestion2" class="tx" placeholder="जो भी मन में हो, लिखें..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion2')) submitAndDone('suggestion2');">Submit करें →</button>
+      </div>
+
+      <div class="sec" id="low-nobenefit-info">
+        <div class="pr warn">NutriRoz में 33 जड़ी-बूटियाँ हैं — जो पाचन सुधारता है, गैस-ब्लोटिंग दूर करता है, लिवर को साफ करता है, कब्ज़ से राहत दिलाता है, रोज़ के खाने को पोषण से भरपूर बनाता है और मेटाबॉलिज़्म को दुरुस्त रखता है।</div>
+        <div class="q-text">क्या आप हमें अपनी कोई राय या सुझाव देना चाहेंगे?</div>
+        <textarea id="suggestion8" class="tx" placeholder="जो भी मन में हो, लिखें..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion8')) submitAndDone('suggestion8');">Submit करें →</button>
+      </div>
+
+      <div class="sec" id="low-price-info">
+        <div class="pr warn">शुक्रिया! हम आपको अपने Latest Offers से अपडेट रखते रहेंगे।</div>
+        <div class="q-text">क्या आप हमें अपनी कोई राय या सुझाव देना चाहेंगे?</div>
+        <textarea id="suggestion3" class="tx" placeholder="जो भी मन में हो, लिखें..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion3')) submitAndDone('suggestion3');">Submit करें →</button>
+      </div>
+
+      <div class="sec" id="low-quality-info">
+        <div class="q-text">क्या आप हमें अपनी कोई राय या सुझाव देना चाहेंगे?</div>
+        <textarea id="suggestion4" class="tx" placeholder="जो भी मन में हो, लिखें..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion4')) submitAndDone('suggestion4');">Submit करें →</button>
+      </div>
+
+      <div class="sec" id="low-delivery-info">
+        <div class="q-text">क्या आप हमें अपनी कोई राय या सुझाव देना चाहेंगे?</div>
+        <textarea id="suggestion5" class="tx" placeholder="जो भी मन में हो, लिखें..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion5')) submitAndDone('suggestion5');">Submit करें →</button>
+      </div>
+
+      <!-- SHARED — Recommend + Share -->
+      <div class="sec" id="rec-yes-share">
+        <div class="share-box">
+          <div class="share-title">NutriRoz के बारे में शेयर करें</div>
+          <div class="share-sub">आपकी एक शेयर से किसी का खाना पौष्टिक बन सकता है। नीचे दिए बटन से आसानी से शेयर करें:</div>
+          <div class="share-btns">
+            <div class="share-btn" onclick="shareWA()">WhatsApp पर Share करें</div>
+            <div class="share-btn" onclick="copyLink()"><span id="clbl">Link Copy करें</span></div>
+          </div>
+        </div>
+        <div class="fl">कोई और सुझाव?</div>
+        <textarea id="suggestion6" class="tx" placeholder="आपका सुझाव हमारे लिए कीमती है..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion6')) submitAndDone('suggestion6');">Submit करें →</button>
+      </div>
+
+      <div class="sec" id="rec-no-end">
+        <div class="pr info">समझ सकते हैं। हम कोशिश करेंगे कि आपका अनुभव और बेहतर हो।</div>
+        <div class="fl">कोई सुझाव देना चाहेंगी?</div>
+        <textarea id="suggestion7" class="tx" placeholder="आपकी राय हमें बेहतर बनने में मदद करती है..."></textarea>
+        <button class="btn-go" onclick="if(validateTextarea('suggestion7')) submitAndDone('suggestion7');">Submit करें →</button>
+      </div>
+
+      <div class="sec" id="wa-reminder-yes">
+        <div class="pr good"><strong>बढ़िया!</strong> हम जल्द ही आपको WhatsApp पर एक friendly Reminder भेजेंगे। 📱</div>
+        <div class="q-text">क्या आप NutriRoz किसी दोस्त या परिवार को बताएंगी?</div>
+        <div class="opts">
+          <div class="opt" onclick="pick('wa-reminder-yes','rec-yes')"><div class="oi" style="background:#eaf3de;color:#27500a">🙏</div>हाँ, ज़रूर!</div>
+          <div class="opt" onclick="pick('wa-reminder-yes','rec-no')"><div class="oi" style="background:#f1efe8;color:#5f5e5a">✗</div>अभी नहीं</div>
+        </div>
+      </div>
+
+      <!-- DONE screen -->
+      <!-- <div class="sec" id="sdone">
+        <div class="done-wrap">
+          <div class="done-anim">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div class="done-h">शुक्रिया जी! 🙏</div>
+          <div class="done-p">आपका जवाब सुरक्षित किया जा रहा है...<br />कृपया प्रतीक्षा करें।</div>
+        </div>
+      </div> -->
+
+    </div><!-- end card -->
+  </div><!-- end pg -->
+
+  %%[ ENDIF ]%%
+
+</div><!-- end pg — closing the ELSE form wrapper -->
+
+%%[ ENDIF ]%%
+
+  <script>
+    const SHARE_URL = "https://store.jeenasikho.com/products/nutriroz-33-herbs-plant-protein-add-to-atta";
+    var fd = {
+      Rating:"", UsedInAtta:"", TasteFeedback:"", Benefits:"",
+      ReorderIntent:"", UsageFrequency:"", NotUsedReason:"",
+      NotUsedOtherText:"", RetryIntent_HowTo:"", IssueType:"",
+      IssueOtherText:"", RetryIntent_Taste:"", UsageDuration:"",
+      QualityIssueText:"", DeliveryIssueText:"", Recommend:"",
+      FinalSuggestion:"", FlowPath:"", LastStep:"", CompletionTimeSec:0
+    };
+
+    var startTime    = Date.now();
+    var hist         = [];
+    var selectedBenefits = [];
+
+    var pm = {
+      s0:5, "h-q2":18, "h-q3-taste":30, "h-benefits":42,
+      "h-reorder":55, "h-reorder-thinking":55,
+      "h-bad-taste":38, "h-ok":38, "h-notyet":30,
+      "h-time":50, "h-howto":50, "h-fear":50,
+      "h-rec":70, "wa-reminder-yes":70,
+      "rec-yes-share":88, "rec-no-end":88,
+      "low-q2":18, "low-price":35, "low-taste":35,
+      "low-nobenefit":35, "low-quality":35, "low-delivery":35,
+      "low-rec":70, "low-taste-no":70, "low-nobenefit-info":70,
+      "low-price-info":70, "low-quality-info":70, "low-delivery-info":70,
+      sdone:100
+    };
+
+    function show(id) {
+      document.querySelectorAll(".sec").forEach(function(e){ e.classList.remove("on"); });
+      var el = document.getElementById(id);
+      if (el) el.classList.add("on");
+      document.getElementById("prog").style.width = (pm[id] || 50) + "%";
+      fd.LastStep = id;
+      var bb = document.getElementById("backbtn");
+      bb.className = (id === "sdone" || hist.length === 0) ? "btn-back" : "btn-back on";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function pickStar(n) {
+      fd.Rating   = n;
+      fd.FlowPath = n >= 4 ? "high" : "low";
+      var r = document.getElementById("starrow").children;
+      for (var i = 0; i < r.length; i++) r[i].className = i < n ? "star on" : "star";
+      hist.push("s0");
+      setTimeout(function(){ show(n >= 4 ? "h-q2" : "low-q2"); }, 150);
+    }
+
+    function toggleChip(el, val) {
+      el.classList.toggle("sel");
+      var idx = selectedBenefits.indexOf(val);
+      if (idx > -1) selectedBenefits.splice(idx, 1);
+      else selectedBenefits.push(val);
+      if (selectedBenefits.length > 0) clearBenefitsError();
+    }
+
+    function pick(from, val) {
+      if (hist.length === 0 || hist[hist.length - 1] !== from) hist.push(from);
+
+      if (from === "h-q2") {
+        fd.UsedInAtta = val;
+        show(val === "made" ? "h-q3-taste" : "h-notyet");
+
+      } else if (from === "h-q3-taste") {
+        fd.TasteFeedback = val;
+        if (val === "great") show("h-benefits");
+        else if (val === "ok") show("h-ok");
+        else show("h-bad-taste");
+
+      } else if (from === "h-benefits") {
+        fd.Benefits = selectedBenefits.join(",");
+        show("h-reorder");
+
+      } else if (from === "h-reorder") {
+        fd.ReorderIntent = val;
+        show(val === "yes" ? "h-rec" : val === "thinking" ? "h-reorder-thinking" : "h-rec");
+
+      } else if (from === "h-reorder-thinking") {
+        show("h-rec");
+
+      } else if (from === "h-ok") {
+        fd.UsageFrequency = val;
+        show("h-rec");
+
+      } else if (from === "h-bad-taste") {
+        fd.UsageFrequency = val;
+        show("h-rec");
+
+      } else if (from === "h-notyet") {
+        if (val === "time")       { fd.NotUsedReason = "time";  show("h-time"); }
+        else if (val === "howto") { fd.NotUsedReason = "howto"; show("h-howto"); }
+        else if (val === "other") {
+          document.getElementById("notyet-other-tx").style.display = "block";
+          document.getElementById("notyet-other-btn").style.display = "block";
+          hist.pop(); return;
+        } else if (val === "other-go") {
+          fd.NotUsedReason    = "other";
+          fd.NotUsedOtherText = document.getElementById("notyet-other-tx").value.trim();
+          show("h-other-rec");
+        }
+
+      } else if (from === "h-time") {
+        show("h-rec");
+
+      } else if (from === "h-howto") {
+        hist.push("h-howto");
+        fd.RetryIntent_HowTo = val === "yes" ? "yes" : "no";
+        show(val === "yes" ? "h-rec" : "h-howto-no");
+
+      } else if (from === "h-fear") {
+        show("h-rec");
+
+      } else if (from === "h-rec") {
+        fd.Recommend = val;
+        show(val === "yes" ? "rec-yes-share" : "rec-no-end");
+
+      } else if (from === "wa-reminder-yes") {
+        show(val === "rec-yes" ? "rec-yes-share" : "rec-no-end");
+
+      } else if (from === "low-q2") {
+        if (val === "price")          { fd.IssueType = "price";     show("low-price"); }
+        else if (val === "taste")     { fd.IssueType = "taste";     show("low-taste"); }
+        else if (val === "nobenefit") { fd.IssueType = "nobenefit"; show("low-nobenefit"); }
+        else if (val === "quality")   { fd.IssueType = "quality";   show("low-quality"); }
+        else if (val === "delivery")  { fd.IssueType = "delivery";  show("low-delivery"); }
+        else if (val === "other") {
+          fd.IssueType = "other";
+          document.getElementById("low-other-tx").style.display = "block";
+          document.getElementById("low-other-btn").style.display = "block";
+          hist.pop(); return;
+        } else if (val === "other-go") {
+          fd.IssueOtherText = document.getElementById("low-other-tx").value.trim();
+          submitAndDone(null);
+        }
+
+      } else if (from === "low-price") {
+        show("low-price-info");
+
+      } else if (from === "low-taste") {
+        fd.RetryIntent_Taste = val;
+        show(val === "no" ? "low-taste-no" : "low-rec");
+
+      } else if (from === "low-nobenefit") {
+        fd.UsageDuration = val;
+        show("low-nobenefit-info");
+
+      } else if (from === "low-quality") {
+        if (val === "done") {
+          fd.QualityIssueText = document.getElementById("quality-issue").value.trim();
+          show("low-quality-info");
+        }
+      } else if (from === "low-delivery") {
+        if (val === "done") {
+          fd.DeliveryIssueText = document.getElementById("give-time").value.trim();
+          show("low-delivery-info");
+        }
+      }
+    }
+
+    function goBack() {
+      if (hist.length > 0) {
+        var p = hist.pop();
+        document.querySelectorAll(".sec").forEach(function(e){ e.classList.remove("on"); });
+        var el = document.getElementById(p);
+        if (el) el.classList.add("on");
+        document.getElementById("prog").style.width = (pm[p] || 5) + "%";
+        document.getElementById("backbtn").className = hist.length > 0 ? "btn-back on" : "btn-back";
+      }
+    }
+
+    function submitAndDone(suggestionId) {
+      if (suggestionId) {
+        var el = document.getElementById(suggestionId);
+        if (el) fd.FinalSuggestion = el.value.trim();
+      }
+      fd.CompletionTimeSec = Math.round((Date.now() - startTime) / 1000);
+
+      var keys = [
+        "Rating","UsedInAtta","TasteFeedback","Benefits","ReorderIntent",
+        "UsageFrequency","NotUsedReason","NotUsedOtherText","RetryIntent_HowTo",
+        "IssueType","IssueOtherText","RetryIntent_Taste","UsageDuration",
+        "QualityIssueText","DeliveryIssueText","Recommend","FinalSuggestion",
+        "FlowPath","LastStep","CompletionTimeSec"
+      ];
+      keys.forEach(function(k) {
+        var inp = document.getElementById("f_" + k);
+        if (inp) inp.value = fd[k] !== undefined ? fd[k] : "";
+      });
+
+      // document.getElementById("submitOverlay").classList.add("on");
+
+      document.getElementById("sfmcForm").submit();
+    }
+
+    function shareWA() {
+      var text = "Are you experiencing any of these issues? \nPoor digestion, bloating, constipation, low daily nutrition intake, or struggling with weak liver function? Try Jeena Sikho Pet Yakrit Pleeha Shuddhi Kit and Nutri Roz, and you’ll forget you ever had any of these! Buy now:\n" + SHARE_URL;
+      var url = "https://wa.me/?text=" + encodeURIComponent(text);
+      window.open(url, "_blank");
+    }
+    function copyLink() {
+      navigator.clipboard.writeText(SHARE_URL).then(function() {
+        var lbl = document.getElementById("clbl");
+        if (lbl) {
+          lbl.innerText = "Copied!";
+          setTimeout(function() {
+            lbl.innerText = "Link Copy करें";
+          }, 1500);
+        }
+      });
+    }
+
+    function handleLowOther() {
+      if (!validateTextarea("low-other-tx")) return;
+      pick("low-q2", "other-go");
+    }
+
+    function validateTextarea(id) {
+      var tx = document.getElementById(id);
+      var val = tx.value.trim();
+      tx.style.borderColor = val.length < 30 ? "red" : "#1d9e75";
+      return val.length >= 30;
+    }
+
+    function validateBenefits() {
+      if (selectedBenefits.length === 0) { showBenefitsError(); return; }
+      clearBenefitsError();
+      fd.Benefits = selectedBenefits.join(",");
+      pick("h-benefits", "done");
+    }
+    function showBenefitsError() {
+      var err = document.getElementById("benefit-error");
+      if (!err) {
+        err = document.createElement("div");
+        err.id = "benefit-error";
+        err.style.cssText = "color:red;font-size:12px;margin-top:8px";
+        err.innerText = "विकल्प चुनें";
+        document.getElementById("benefit-chips").after(err);
+      }
+    }
+    function clearBenefitsError() {
+      var err = document.getElementById("benefit-error");
+      if (err) err.remove();
+    }
+
+    ["low-other-tx","notyet-other-tx","quality-issue","give-time",
+     "suggestion","suggestion2","suggestion3","suggestion4",
+     "suggestion5","suggestion6","suggestion7","suggestion8"].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", function(){
+        this.style.borderColor = this.value.trim().length >= 30 ? "#1d9e75" : "";
+      });
+    });
+  </script>
+  </body>
+</html>
