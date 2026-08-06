@@ -386,7 +386,7 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
 
       <!-- Hero -->
       <div class="hero">
-        <h1><strong>%%=v(@displayName)=%%</strong>, आपकी डॉक्टर के साथ Video Consultation सफलतापूर्वक पूरी हो गई है!</h1>
+        <h1><strong>%%=v(@displayName)=%%</strong> Ji, आपकी डॉक्टर के साथ Video Consultation सफलतापूर्वक पूरी हो गई है!</h1>
         <br/>
         <div class="hero-sub">हमें उम्मीद है कि Consultation के दौरान आपको अपनी समस्या से संबंधित संपूर्ण जानकारी मिली होगी।</div>
         <br/>
@@ -396,7 +396,7 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
       <!-- Main Card -->
       <div class="card">
         <div class="pbar"><div class="pfill" id="prog" style="width:5%"></div></div>
-        <button class="btn-back" id="backbtn" onclick="goBack()">← वापस जाएं</button>
+        <button class="btn-back" id="backbtn" onclick="goBack()">← वापस जाओ</button>
 
         <!-- ──────────────────────────────────────── -->
         <!-- S0: Star Rating                          -->
@@ -719,7 +719,7 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
         setTimeout(function() {
           if (n === 4 || n === 5) {
             collected.FeedbackPath = 'High';
-            show('s1h');
+            go('s0', 's1h');
           } else {
             collected.FeedbackPath = 'Low';
             if (n === 3) {
@@ -729,7 +729,7 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
               document.getElementById('s1mTitle').textContent = 'हमें खेद है कि आपका अनुभव अच्छा नहीं रहा।';
               document.getElementById('s1mQuestion').textContent = 'कृपया बताएं कि आपको किस बात से निराशा हुई?';
             }
-            show('s1m');
+            go('s0', 's1m');
           }
         }, 300);
       }
