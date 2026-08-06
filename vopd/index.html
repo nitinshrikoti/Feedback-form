@@ -753,7 +753,7 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
         input.style.display = 'none';
         input.value = '';
         collected.PrimaryFeedback = el.querySelector('div').textContent.trim();
-        collected.OtherFeedbackText = '';
+        collected.IssueDetail = '';
         btn.style.display = 'block';
       }
 
@@ -780,7 +780,7 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
           return;
         }
         error.style.display = 'none';
-        collected.OtherFeedbackText = input.style.display !== 'none' ? input.value.trim() : '';
+        collected.IssueDetail = input.style.display !== 'none' ? input.value.trim() : '';
         go('s1h', 's2h-recommend');
       }
 
