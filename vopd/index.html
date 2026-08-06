@@ -471,14 +471,15 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
         <div class="section" id="s1m">
           <div class="prompt warn"><strong id="s1mTitle">हमें खेद है कि आपका अनुभव अच्छा नहीं रहा।</strong></div>
           <div class="q-text" id="s1mQuestion">कृपया बताएं कि आपको किस बात से निराशा हुई?</div>
-          <div class="opts">
-            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>डॉक्टर काफी देर से जुड़े</div></button>
-            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>डॉक्टर ने ठीक से Guide नहीं किया</div></button>
-            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>समस्या का सही उपचार नहीं बताया</div></button>
-            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>डॉक्टर का व्यवहार अच्छा नहीं था</div></button>
-            <button class="opt" onclick="setPrimary(this.querySelector('div').textContent); go('s1m','s2m-detail')"><div>कॉल/वीडियो में तकनीकी समस्या आई</div></button>
-            <button class="opt" onclick="setPrimary('अन्य'); go('s1m','s2m-detail')"><div>कोई अन्य</div></button>
+          <div class="opts" id="mid-opts">
+            <button class="opt" onclick="pickMidOpt(this)"><div>डॉक्टर काफी देर से जुड़े</div></button>
+            <button class="opt" onclick="pickMidOpt(this)"><div>डॉक्टर ने ठीक से Guide नहीं किया</div></button>
+            <button class="opt" onclick="pickMidOpt(this)"><div>समस्या का सही उपचार नहीं बताया</div></button>
+            <button class="opt" onclick="pickMidOpt(this)"><div>डॉक्टर का व्यवहार अच्छा नहीं था</div></button>
+            <button class="opt" onclick="pickMidOpt(this)"><div>कॉल/वीडियो में तकनीकी समस्या आई</div></button>
+            <button class="opt" onclick="pickMidOpt(this, 'अन्य')"><div>कोई अन्य</div></button>
           </div>
+          <button id="nextBtnMid" class="btn-submit" onclick="validateAndGoMid()" style="display:none">आगे बढ़ें →</button>
         </div>
 
         <!-- S2M-DETAIL -->
@@ -782,6 +783,19 @@ SET @isSubmittedNow = IIF(NOT EMPTY(@starRating), 1, 0)
         collected.OtherFeedbackText = input.style.display !== 'none' ? input.value.trim() : '';
         go('s1h', 's2h-recommend');
       }
+
+        function pickMidOpt(el, overrideVal) {
+          var all = document.querySelectorAll('#mid-opts .opt');
+          var btn = document.getElementById('nextBtnMid');
+          all.forEach(function(o) { o.classList.remove('selected'); });
+          el.classList.add('selected');
+          collected.PrimaryFeedback = overrideVal || el.querySelector('div').textContent.trim();
+          btn.style.display = 'block';
+        }
+
+        function validateAndGoMid() {
+          go('s1m', 's2m-detail');
+        }
 
       /* ══════════════════════════════════════════════
          TEXTAREA VALIDATION
