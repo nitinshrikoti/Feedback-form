@@ -3,9 +3,8 @@ SET @Id = RequestParameter("id")
 
 IF NOT EMPTY(@Id) THEN
 
-  SET @accountId   = Lookup("VOPD_COMPLETED_MSG","AccountId","Id",@Id)
-  SET @patientName = Lookup("VOPD_COMPLETED_MSG","Patients_Name__c","Id",@Id)
-  SET @phone       = Lookup("VOPD_COMPLETED_MSG","Patient_Number_open__c","Id",@Id)
+  SET @patientName = Lookup("ServiceAppointment_Salesforce","Patients_Name__c","Id",@Id)
+  SET @phone       = Lookup("ServiceAppointment_Salesforce","Patient_Number_open__c","Id",@Id)
 
 ENDIF
 
@@ -18,11 +17,9 @@ SET @alreadySubmitted = IIF(RowCount(@existingCount) > 0, 1, 0)
 SET @starRating        = RequestParameter("StarRating")
 SET @feedbackPath      = RequestParameter("FeedbackPath")
 SET @primaryFeedback   = RequestParameter("PrimaryFeedback")
-SET @otherFeedbackText = RequestParameter("OtherFeedbackText")
 SET @issueDetail       = RequestParameter("IssueDetail")
 SET @wouldRecommend    = RequestParameter("WouldRecommend")
 SET @callbackRequested = RequestParameter("CallbackRequested")
-SET @additionalFeedback= RequestParameter("AdditionalFeedback")
 
 
 IF NOT EMPTY(@starRating) AND NOT EMPTY(@Id) AND @alreadySubmitted == 0 THEN
@@ -31,7 +28,6 @@ IF NOT EMPTY(@starRating) AND NOT EMPTY(@Id) AND @alreadySubmitted == 0 THEN
     "VOPD_Feedback1",
     "Id", @Id,
 
-    "AccountId",           @accountId,
     "PatientName",         @patientName,
     "Phone",               @phone,
     "CreatedDate",         @createdDate,
@@ -39,11 +35,9 @@ IF NOT EMPTY(@starRating) AND NOT EMPTY(@Id) AND @alreadySubmitted == 0 THEN
     "StarRating",          @starRating,
     "FeedbackPath",        @feedbackPath,
     "PrimaryFeedback",     @primaryFeedback,
-    "OtherFeedbackText",   @otherFeedbackText,
     "IssueDetail",         @issueDetail,
     "WouldRecommend",      @wouldRecommend,
-    "CallbackRequested",   @callbackRequested,
-    "AdditionalFeedback",  @additionalFeedback
+    "CallbackRequested",   @callbackRequested
   )
 
 ENDIF
